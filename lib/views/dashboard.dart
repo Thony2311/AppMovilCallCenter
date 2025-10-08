@@ -1,49 +1,29 @@
 import 'package:flutter/material.dart';
+import '../constants/app_constants.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   Widget _buildStatCard(String title, String value, IconData icon) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFE6F0FA), // azul clarito
-          borderRadius: BorderRadius.circular(16),
-        ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConfig.borderRadius)),
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: AppColors.secondary,
+      child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.blue, size: 22),
+                Icon(icon, color: AppColors.primary),
                 const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
+                Text(title, style: AppTextStyles.subtitle),
               ],
             ),
             const SizedBox(height: 10),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
+            Text(value, style: AppTextStyles.title),
           ],
         ),
       ),
@@ -54,12 +34,9 @@ class DashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Dashboard",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        backgroundColor: AppColors.primary,
+        title: const Text("Dashboard", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
       ),
       body: ListView(
         children: [

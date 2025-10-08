@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_constants.dart';
 import '../models/venta_model.dart';
 
 class DetalleLlamadaView extends StatelessWidget {
@@ -10,28 +11,35 @@ class DetalleLlamadaView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Detalle de la llamada"),
+        backgroundColor: AppColors.primary,
+        title: const Text("Detalle de la llamada", style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            Text("Cliente: ${venta.cliente}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text("Estado: ${venta.status}"),
-            const SizedBox(height: 8),
-            Text("Monto: \$${venta.monto.toStringAsFixed(2)}"),
-            const Divider(height: 30),
-            const Text("Transcripción de la llamada", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(
-              venta.transcripcion ?? "No hay transcripción disponible.",
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-            ),
-          ],
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
+              Text("Cliente: ${venta.cliente}", style: AppTextStyles.subtitle),
+              const SizedBox(height: 8),
+              Text("Estado: ${venta.status}", style: AppTextStyles.body),
+              const SizedBox(height: 8),
+              Text("Monto: \$${venta.monto.toStringAsFixed(2)}", style: AppTextStyles.body),
+              const Divider(height: 30),
+              const Text("Transcripción de la llamada", style: AppTextStyles.subtitle),
+              const SizedBox(height: 8),
+              Text(
+                venta.transcripcion ?? "No hay transcripción disponible.",
+                style: AppTextStyles.body,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
