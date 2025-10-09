@@ -10,101 +10,241 @@ class LoginView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userController = TextEditingController();
-    final passController = TextEditingController();
-
-    return BlocProvider(
+    return BlocProvider<LoginBloc>(
       create: (_) => LoginBloc(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: BlocConsumer<LoginBloc, LoginState>(
-              listener: (context, state) {
-                if (state is LoginSuccess) {
-                  if (state.user.role == "agente") {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AgenteMainView(),
-                      ),
-                    );
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MainScreen(),
-                      ),
-                    );
-                  }
-                } else if (state is LoginFailure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message)),
+      child: const _LoginForm(),
+    );
+  }
+}
+
+class _LoginForm extends StatefulWidget {
+  const _LoginForm({Key? key}) : super(key: key);
+
+  @override
+  State<_LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<_LoginForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _userController = TextEditingController();
+  final _passController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _userController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.primary,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: BlocConsumer<LoginBloc, LoginState>(
+            listener: (context, state) {
+              if (state is LoginSuccess) {
+                if (state.user.role == "agente") {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AgenteMainView()),
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MainScreen()),
                   );
                 }
-              },
-              builder: (context, state) {
-                final bloc = context.read<LoginBloc>();
-
-                return Column(
-                  children: [
-                    const Icon(Icons.call, size: 120, color: AppColors.primary),
-                    const SizedBox(height: 30),
-                    TextField(
-                      controller: userController,
-                      decoration: InputDecoration(
-                        labelText: "Usuario",
-                        prefixIcon: const Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                        ),
+              } else if (state is LoginFailure) {
+                // <-- CORRECCIÓN: quitar coma dentro de los paréntesis de of(...)
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.message)));
+              }
+            },
+            builder: (context, state) {
+              final bloc = context.read<LoginBloc>();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Logo fuera del rectángulo
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 35),
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: AppColors.background,
+                      child: Icon(
+                        Icons.phone_in_talk,
+                        size: 70,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: passController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: "Contraseña",
-                        prefixIcon: const Icon(Icons.lock),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                        ),
+                  ),
+                  Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color.fromARGB(255, 35, 45, 77),
+                            blurRadius: 10,
+                            offset: const Offset(5, 5),
+                          ),
+                          BoxShadow(
+                            color: const Color.fromARGB(255, 35, 45, 77),
+                            blurRadius: 5,
+                            offset: const Offset(10, 10),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                        ),
-                        elevation: 6,
-                      ),
-                      onPressed: state is LoginLoading
-                          ? null
-                          : () {
-                              bloc.add(LoginSubmitted(
-                                userController.text.trim(),
-                                passController.text.trim(),
-                              ));
-                            },
-                      child: state is LoginLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "Iniciar sesión",
-                              style: TextStyle(fontSize: 16, color: Colors.white),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Título y subtítulo
+                            const Text(
+                              "Iniciar Sesión",
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary
+                              ),
                             ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "call center",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.textSecondary
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            // Campo usuario
+                            TextFormField(
+                          controller: _userController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'El usuario es requerido';
+                            }
+                            return null;
+                          },
+                          decoration: AppInputDecorations.textField(
+                            label: "Usuario",
+                            icon: Icons.person_2_outlined,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        // Campo contraseña con ojito
+                        TextFormField(
+                          controller: _passController,
+                          obscureText: _obscurePassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'La contraseña es requerida';
+                            }
+                            return null;
+                          },
+                          decoration: AppInputDecorations.textField(
+                            label: "Contraseña",
+                            icon: Icons.lock_outline,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.grey[600],
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // ¿Olvidó su contraseña?
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/recuperar');
+                            },
+                            child: const Text(
+                              "¿Olvidó su contraseña?",
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        // Botón iniciar sesión
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppConfig.borderRadius,
+                                ),
+                              ),
+                              elevation: 6,
+                            ),
+                            onPressed: state is LoginLoading
+                                ? null
+                                : () {
+                                    if (_formKey.currentState?.validate() ??
+                                        false) {
+                                      bloc.add(
+                                        LoginSubmitted(
+                                          _userController.text.trim(),
+                                          _passController.text.trim(),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            child: state is LoginLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Iniciar sesión",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
-    );
+    ),
+  ),
+);
   }
 }
