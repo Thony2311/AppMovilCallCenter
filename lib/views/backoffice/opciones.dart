@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constants.dart';
-
+import '../../constants/app_constants.dart';
+import '../login.dart';
 class OpcionesView extends StatelessWidget {
   const OpcionesView({super.key});
 
@@ -33,13 +33,18 @@ class OpcionesView extends StatelessWidget {
           _buildOption("Notificaciones y sonidos", Icons.notifications),
           _buildOption("Soporte", Icons.help),
           _buildOption("Términos y condiciones", Icons.description),
-          _buildOption("Cerrar sesión", Icons.logout),
+          _buildOption("Cerrar sesión", Icons.logout, () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginView()),
+              (route) => false,
+            );  
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildOption(String title, IconData icon) {
+  Widget _buildOption(String title, IconData icon, [VoidCallback? onTap]) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConfig.borderRadius)),
       elevation: 2,
@@ -48,7 +53,7 @@ class OpcionesView extends StatelessWidget {
         leading: Icon(icon, color: AppColors.primary),
         title: Text(title, style: AppTextStyles.subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

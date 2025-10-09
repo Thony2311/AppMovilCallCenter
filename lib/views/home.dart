@@ -1,6 +1,6 @@
+import 'package:call_center_application/views/login.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
-import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,10 +37,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // ⏳ Espera 2.5s antes de ir a MainScreen
     Future.delayed(const Duration(milliseconds: 2500), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => const LoginView()),
       );
     });
   }
@@ -64,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 🔹 Logo / ícono principal
+                  //  Logo 
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -85,7 +84,6 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   const SizedBox(height: 30),
 
-                  // 🔹 Título animado
                   const Text(
                     "Call Center",
                     style: TextStyle(

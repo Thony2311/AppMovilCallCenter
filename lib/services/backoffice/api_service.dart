@@ -1,4 +1,4 @@
-import '../models/venta_model.dart';
+import '../../models/backoffice/venta_model.dart';
 
 class ApiService {
   // TODO: Conectar con backend real

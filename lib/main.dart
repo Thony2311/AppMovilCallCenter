@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'constants/app_constants.dart';
-import 'views/dashboard.dart';
-import 'views/ventas.dart';
-import 'views/opciones.dart';
+import 'views/backoffice/dashboard.dart';
+import 'views/backoffice/ventas.dart';
+import 'views/backoffice/opciones.dart';
 import 'views/home.dart';
 
 void main() {

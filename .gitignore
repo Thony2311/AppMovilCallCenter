@@ -111,3 +111,8 @@ app.*.map.json
 # macOS related
 /macos/Flutter/ephemeral/
 /macos/Flutter/Flutter-Generated.xcconfig
+
+# Flutter generated plugin registrants (no versionar)
+**/flutter/generated_plugin_registrant.*
+**/flutter/generated_plugins.cmake
+**/Flutter/GeneratedPluginRegistrant.*

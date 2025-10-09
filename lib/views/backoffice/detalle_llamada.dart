@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constants.dart';
-import '../models/venta_model.dart';
+import '../../constants/app_constants.dart';
+import '../../models/backoffice/venta_model.dart';
 
 class DetalleLlamadaView extends StatelessWidget {
   final Venta venta;

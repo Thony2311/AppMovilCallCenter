@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../models/venta_model.dart';
-import '../../services/api_service.dart';
+import '../../../models/backoffice/venta_model.dart';
+import '../../../services/backoffice/api_service.dart';
 
 part 'Venta_event.dart';
 part 'Venta_state.dart';

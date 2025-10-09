@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../blocs/ventas/ventas_bloc.dart';
-import '../services/api_service.dart';
-import '../constants/app_constants.dart';
+import '../../blocs/backoffice/ventas/ventas_bloc.dart';
+import '../../services/backoffice/api_service.dart';
+import '../../constants/app_constants.dart';
 import 'detalle_llamada.dart';
 
 class VentasView extends StatefulWidget {
@@ -38,7 +38,7 @@ class _VentasViewState extends State<VentasView> {
           children: [
             const SizedBox(height: 12),
 
-            // 🔹 Filtro
+            // Filtro
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: BlocBuilder<VentasBloc, VentasState>(
@@ -68,7 +68,7 @@ class _VentasViewState extends State<VentasView> {
                         onChanged: (value) {
                           if (value != null) {
                             context.read<VentasBloc>().add(FiltrarVentas(value));
-                            setState(() => _currentPage = 0); // Reinicia paginación al filtrar
+                            setState(() => _currentPage = 0); // Reset to first page on filter change
                           }
                         },
                       ),
@@ -80,7 +80,7 @@ class _VentasViewState extends State<VentasView> {
 
             const SizedBox(height: 10),
 
-            // 🔹 Lista de ventas
+            // Lista ventas
             Expanded(
               child: BlocBuilder<VentasBloc, VentasState>(
                 builder: (context, state) {
@@ -92,7 +92,6 @@ class _VentasViewState extends State<VentasView> {
                       return const Center(child: Text("No hay ventas disponibles."));
                     }
 
-                    // 🧩 Calcular total de páginas
                     final totalPages = (ventas.length / _itemsPerPage).ceil();
                     final startIndex = _currentPage * _itemsPerPage;
                     final endIndex = startIndex + _itemsPerPage;
@@ -159,7 +158,6 @@ class _VentasViewState extends State<VentasView> {
                           ),
                         ),
 
-                        // 🔹 Controles de paginación
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
