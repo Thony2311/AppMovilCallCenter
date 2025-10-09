@@ -9,7 +9,7 @@ class LoginApi {
       return null;
     }
 
-    // Simulación: determina el rol según el nombre
+    // Simulación: solo busca si tiene agente/backoffice en el username
     final role = username.toLowerCase().contains("agente")
         ? "agente"
         : "backoffice";

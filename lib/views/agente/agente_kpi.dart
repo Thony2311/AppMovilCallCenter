@@ -3,7 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_constants.dart';
 
 class AgenteKPIView extends StatelessWidget {
-  const AgenteKPIView({Key? key}) : super(key: key);
+  const AgenteKPIView({super.key});
 
   Widget _barIndicator(String label, double value) {
     return Column(

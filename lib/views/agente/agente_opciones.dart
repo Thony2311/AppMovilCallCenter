@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_constants.dart';
 import '../login.dart';
 class AgenteOpcionesView extends StatelessWidget {
-  const AgenteOpcionesView({Key? key}) : super(key: key);
+  const AgenteOpcionesView({super.key});
 
   Widget _optionCard(String title, List<Widget> children) {
     return Container(

@@ -94,7 +94,7 @@ class DashboardView extends StatelessWidget {
                     color = AppColors.accent;
                     break;
                   default:
-                    color = AppColors.secondary;
+                    color = const Color.fromARGB(255, 21, 0, 98);
                 }
 
                 return Padding(

@@ -5,7 +5,7 @@ import 'agente_kpi.dart';
 import 'agente_opciones.dart';
 
 class AgenteMainView extends StatefulWidget {
-  const AgenteMainView({Key? key}) : super(key: key);
+  const AgenteMainView({super.key});
 
   @override
   State<AgenteMainView> createState() => _AgenteMainViewState();

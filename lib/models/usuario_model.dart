@@ -1,7 +1,7 @@
 class UsuarioModel {
   final String username;
-  final String role; // "agente" o "backoffice"
-  final String contrasena; // En caso de conexión futura con backend
+  final String role; 
+  final String contrasena;
 
   UsuarioModel({
     required this.username,
@@ -9,7 +9,7 @@ class UsuarioModel {
     required this.contrasena,
   });
 
-  // Simula parseo de un JSON (para futura API real)
+  // Simula parseo de un JSON 
   factory UsuarioModel.fromJson(Map<String, dynamic> json) {
     return UsuarioModel(
       username: json['username'] ?? '',

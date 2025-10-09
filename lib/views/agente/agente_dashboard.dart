@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_constants.dart';
 
 class AgenteDashboardView extends StatelessWidget {
-  const AgenteDashboardView({Key? key}) : super(key: key);
+  const AgenteDashboardView({super.key});
 
   Widget _metricCard(String title, String value, IconData icon) {
     return AnimatedContainer(
