@@ -11,6 +11,7 @@ class AppColors {
   static const Color inputBackground = Color(0xFFEDF2F7); // Fondo de campos
   static const Color success = Color(0xFF2E7D32); // Verde éxito
   static const Color error = Color(0xFFD32F2F); // Rojo error
+  static const Color tertiary = Color.fromARGB(255, 66, 6, 78);
 }
 
 class AppTextStyles {

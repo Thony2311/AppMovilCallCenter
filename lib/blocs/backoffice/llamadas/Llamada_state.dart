@@ -1,4 +1,4 @@
-part of 'ventas_bloc.dart';
+part of 'Llamadas_bloc.dart';
 
 abstract class VentasState {}
 

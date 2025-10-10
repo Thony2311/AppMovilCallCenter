@@ -65,7 +65,7 @@ class DashboardView extends StatelessWidget {
                       ),
                     ),
                     PieChartSectionData(
-                      color: AppColors.secondary,
+                      color: AppColors.tertiary,
                       value: data["Ventas por auditar"]!.toDouble(),
                       title:
                           "${((data["Ventas por auditar"]! / total) * 100).toStringAsFixed(1)}%",

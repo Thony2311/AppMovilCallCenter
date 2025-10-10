@@ -2,8 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../models/backoffice/venta_model.dart';
 import '../../../services/backoffice/api_service.dart';
 
-part 'Venta_event.dart';
-part 'Venta_state.dart';
+part 'Llamada_event.dart';
+part 'Llamada_state.dart';
 
 class VentasBloc extends Bloc<VentasEvent, VentasState> {
   final ApiService apiService;

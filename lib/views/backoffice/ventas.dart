@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../blocs/backoffice/ventas/ventas_bloc.dart';
+import '../../blocs/backoffice/llamadas/Llamadas_bloc.dart';
 import '../../services/backoffice/api_service.dart';
 import '../../constants/app_constants.dart';
 import 'detalle_llamada.dart';
