@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Permite HTTP para tu servidor EC2 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">52.207.69.237</domain>
+    </domain-config>
+    
+    <!-- Configuración base: solo HTTPS por defecto (más seguro) -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

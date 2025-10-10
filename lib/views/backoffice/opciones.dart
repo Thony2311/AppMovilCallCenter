@@ -1,30 +1,78 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_constants.dart';
+import '../../config/auth_manager.dart';
 import '../login.dart';
+
 class OpcionesView extends StatelessWidget {
   const OpcionesView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Obtener datos del usuario desde AuthManager
+    final authManager = AuthManager();
+    final nombre = authManager.nombre ?? 'Usuario';
+    final email = authManager.email ?? 'usuario@callcenter.com';
+    
+    // Obtener la inicial del nombre para el avatar
+    final inicial = nombre.isNotEmpty ? nombre[0].toUpperCase() : 'U';
+    
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
         backgroundColor: AppColors.primary,
-        title: const Text("Opciones", style: TextStyle(color: Colors.white)),
-        centerTitle: true,
+        title: const Text("Opciones", style: AppTextStyles.headers),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 30, backgroundColor: AppColors.accent, child: const Text("J")),
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: AppColors.accent,
+                child: Text(
+                  inicial,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text("Juan Perez", style: AppTextStyles.subtitle),
-                  Text("juan@gmail.com", style: AppTextStyles.body),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nombre,
+                      style: AppTextStyles.subtitle,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      email,
+                      style: AppTextStyles.body,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (authManager.role != null)
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          authManager.role!.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -47,7 +95,13 @@ class OpcionesView extends StatelessWidget {
                   TextButton(
                     child: const Text('Salir'),
                     onPressed: () {
+                      // Limpiar la sesión del usuario
+                      AuthManager().clearSession();
+                      
+                      // Cerrar el diálogo
                       Navigator.of(context).pop();
+                      
+                      // Navegar al login y limpiar todas las rutas anteriores
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const LoginView()),
                         (route) => false,

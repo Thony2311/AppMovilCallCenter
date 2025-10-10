@@ -68,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
         showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),
-          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: "Ventas"),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: "Llamadas"),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Opciones"),
         ],
       ),

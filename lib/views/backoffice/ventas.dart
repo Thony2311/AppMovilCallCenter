@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/backoffice/llamadas/Llamadas_bloc.dart';
 import '../../services/backoffice/api_service.dart';
 import '../../constants/app_constants.dart';
+import '../../config/auth_manager.dart';
 import 'detalle_llamada.dart';
 
 class VentasView extends StatefulWidget {
@@ -18,20 +19,20 @@ class _VentasViewState extends State<VentasView> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtener el token del AuthManager
+    final token = AuthManager().token;
+    
     return BlocProvider(
-      create: (_) => VentasBloc(ApiService())..add(CargarVentas()),
+      create: (_) => VentasBloc(ApiService(token: token))..add(CargarVentas()),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: AppColors.primary,
           title: const Text(
-            "Ventas auditadas",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            "Listado de llamadas",
+            style: AppTextStyles.headers
           ),
-          centerTitle: true,
+          centerTitle: false,
           elevation: 4,
           shadowColor: AppColors.primary.withAlpha(80),
         ),
@@ -80,7 +81,7 @@ class _VentasViewState extends State<VentasView> {
                         items: const [
                           DropdownMenuItem(value: "Todas", child: Text("Todas")),
                           DropdownMenuItem(value: "Ventas auditadas", child: Text("Ventas auditadas")),
-                          DropdownMenuItem(value: "Ventas", child: Text("Ventas")),
+                          DropdownMenuItem(value: "Ventas por auditar", child: Text("Ventas por auditar")),
                           DropdownMenuItem(value: "Llamadas reportadas", child: Text("Llamadas reportadas")),
                         ],
                         onChanged: (value) {

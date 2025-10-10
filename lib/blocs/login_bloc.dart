@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../services/login_api.dart';
-import '../../models/usuario_model.dart';
+import '../services/login_api.dart';
+import '../models/usuario_model.dart';
+import '../config/auth_manager.dart';
 
 // Eventos
 abstract class LoginEvent {}
@@ -43,6 +44,16 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       if (user == null) {
         emit(LoginFailure("Usuario o contraseña incorrectos"));
       } else {
+        // Guardar el token en el AuthManager
+        AuthManager().setSession(
+          token: user.contrasena, // El token viene en el campo contrasena
+          username: user.username,
+          nombre: user.nombre,
+          email: user.email,
+          role: user.role,
+          userId: user.id,
+        );
+        
         emit(LoginSuccess(user));
       }
     } catch (e) {

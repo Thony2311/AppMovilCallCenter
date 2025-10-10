@@ -12,7 +12,7 @@ class DetalleLlamadaView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text("Detalle de la llamada", style: TextStyle(color: Colors.white)),
+        title: const Text("Detalle de la llamada", style: AppTextStyles.headers),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

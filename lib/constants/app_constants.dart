@@ -31,6 +31,12 @@ class AppTextStyles {
     fontSize: 14,
     color: AppColors.textSecondary,
   );
+
+  static const TextStyle headers = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
 }
 
 class AppConfig {

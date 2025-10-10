@@ -29,7 +29,7 @@ class VentasBloc extends Bloc<VentasEvent, VentasState> {
                   return s.status == "auditada";
                 } else if (event.filter == "Llamadas reportadas") {
                   return s.status == "reportada";
-                } else if (event.filter == "Ventas") {
+                } else if (event.filter == "Ventas por auditar") {
                   return s.status == "pendiente";
                 }
                 return true;
