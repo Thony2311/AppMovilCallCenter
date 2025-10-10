@@ -7,9 +7,7 @@ class AppColors {
   static const Color background = Color(0xFFF7F9FC); // Blanco azulado
   static const Color surface = Color(0xFFFFFFFF); // Blanco puro
   static const Color textPrimary = Color(0xFF0A0E21); // Texto principal
-  static const Color textSecondary = Color(
-    0xFF546E7A,
-  ); // Texto secundario gris-azulado
+  static const Color textSecondary = Color(0xFF546E7A,); // Texto secundario gris-azulado
   static const Color inputBackground = Color(0xFFEDF2F7); // Fondo de campos
   static const Color success = Color(0xFF2E7D32); // Verde éxito
   static const Color error = Color(0xFFD32F2F); // Rojo error

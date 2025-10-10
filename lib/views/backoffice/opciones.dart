@@ -34,10 +34,29 @@ class OpcionesView extends StatelessWidget {
           _buildOption("Soporte", Icons.help),
           _buildOption("Términos y condiciones", Icons.description),
           _buildOption("Cerrar sesión", Icons.logout, () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginView()),
-              (route) => false,
-            );  
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Confirmar cierre de sesión'),
+                content: const Text('¿Estás seguro que deseas salir de la aplicación?'),
+                actions: [
+                  TextButton(
+                    child: const Text('Cancelar'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('Salir'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginView()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
           }),
         ],
       ),

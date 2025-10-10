@@ -14,7 +14,7 @@ class VentasView extends StatefulWidget {
 
 class _VentasViewState extends State<VentasView> {
   int _currentPage = 0;
-  final int _itemsPerPage = 10;
+  final int _itemsPerPage = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +32,14 @@ class _VentasViewState extends State<VentasView> {
             ),
           ),
           centerTitle: true,
-          elevation: 2,
+          elevation: 4,
+          shadowColor: AppColors.primary.withAlpha(80),
         ),
         body: Column(
           children: [
             const SizedBox(height: 12),
 
-            // Filtro
+            // 🔹 Filtro estilizado con efecto 3D
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: BlocBuilder<VentasBloc, VentasState>(
@@ -51,13 +52,30 @@ class _VentasViewState extends State<VentasView> {
                     decoration: BoxDecoration(
                       color: AppColors.secondary,
                       borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                      border: Border.all(color: AppColors.primary.withAlpha(50)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.8),
+                          offset: const Offset(-2, -2),
+                          blurRadius: 3,
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          offset: const Offset(2, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
+                        dropdownColor: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         value: currentFilter,
                         isExpanded: true,
+                        //isDense: true, // Makes the button itself more compact
+                        //menuMaxHeight: 200, // Limits the menu height to prevent strange positioning
                         icon: const Icon(Icons.filter_alt, color: AppColors.primary),
                         items: const [
                           DropdownMenuItem(value: "Todas", child: Text("Todas")),
@@ -68,7 +86,7 @@ class _VentasViewState extends State<VentasView> {
                         onChanged: (value) {
                           if (value != null) {
                             context.read<VentasBloc>().add(FiltrarVentas(value));
-                            setState(() => _currentPage = 0); // Reset to first page on filter change
+                            setState(() => _currentPage = 0);
                           }
                         },
                       ),
@@ -80,7 +98,7 @@ class _VentasViewState extends State<VentasView> {
 
             const SizedBox(height: 10),
 
-            // Lista ventas
+            // 🔹 Lista de ventas
             Expanded(
               child: BlocBuilder<VentasBloc, VentasState>(
                 builder: (context, state) {
@@ -109,7 +127,7 @@ class _VentasViewState extends State<VentasView> {
                               final venta = visibles[index];
                               return InkWell(
                                 borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                                splashColor: AppColors.primary.withOpacity(0.1),
+                                splashColor: AppColors.accent.withAlpha(30),
                                 highlightColor: Colors.transparent,
                                 onTap: () {
                                   Navigator.push(
@@ -127,9 +145,14 @@ class _VentasViewState extends State<VentasView> {
                                     borderRadius: BorderRadius.circular(AppConfig.borderRadius),
                                     boxShadow: [
                                       BoxShadow(
+                                        color: Colors.white.withOpacity(0.8),
+                                        offset: const Offset(-2, -2),
+                                        blurRadius: 3,
+                                      ),
+                                      BoxShadow(
                                         color: Colors.black.withOpacity(0.08),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
+                                        offset: const Offset(2, 2),
+                                        blurRadius: 6,
                                       ),
                                     ],
                                   ),
@@ -138,7 +161,10 @@ class _VentasViewState extends State<VentasView> {
                                       backgroundColor: AppColors.primary,
                                       child: const Icon(Icons.person, color: Colors.white),
                                     ),
-                                    title: Text(venta.cliente, style: AppTextStyles.subtitle),
+                                    title: Text(
+                                      venta.cliente,
+                                      style: AppTextStyles.subtitle,
+                                    ),
                                     subtitle: Row(
                                       children: [
                                         const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
@@ -158,6 +184,7 @@ class _VentasViewState extends State<VentasView> {
                           ),
                         ),
 
+                        // 🔹 Paginación
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
@@ -174,6 +201,10 @@ class _VentasViewState extends State<VentasView> {
                                   disabledBackgroundColor: Colors.grey.shade400,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 3,
                                 ),
                               ),
                               const SizedBox(width: 20),
@@ -193,6 +224,10 @@ class _VentasViewState extends State<VentasView> {
                                   disabledBackgroundColor: Colors.grey.shade400,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 3,
                                 ),
                               ),
                             ],
