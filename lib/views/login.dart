@@ -127,7 +127,7 @@ class _LoginFormState extends State<_LoginForm> {
                   // Logo
                   Container(
                     margin: const EdgeInsets.only(bottom: 35),
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                       radius: 60,
                       backgroundColor: Theme.of(context).colorScheme.surface,
                       child: Icon(
@@ -146,7 +146,7 @@ class _LoginFormState extends State<_LoginForm> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
+                        boxShadow: [
                           BoxShadow(
                             color: Colors.black.withAlpha(51),
                             blurRadius: 15,
