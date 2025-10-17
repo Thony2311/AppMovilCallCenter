@@ -21,8 +21,8 @@ class OpcionesView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.primary,
-        title: const Text("Opciones", style: AppTextStyles.headers),
+        backgroundColor: Theme.of(context).primaryColor, 
+        title: Text("Opciones", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)), // 
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -31,7 +31,7 @@ class OpcionesView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor: AppColors.accent,
+                backgroundColor: Theme.of(context).colorScheme.secondary, 
                 child: Text(
                   inicial,
                   style: const TextStyle(
@@ -48,12 +48,12 @@ class OpcionesView extends StatelessWidget {
                   children: [
                     Text(
                       nombre,
-                      style: AppTextStyles.subtitle,
+                      style: Theme.of(context).textTheme.titleMedium, 
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       email,
-                      style: AppTextStyles.body,
+                      style: Theme.of(context).textTheme.bodyMedium,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (authManager.role != null)
@@ -61,15 +61,15 @@ class OpcionesView extends StatelessWidget {
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(51),
+                          color: Theme.of(context).primaryColor.withAlpha(51), 
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           authManager.role!.toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: Theme.of(context).primaryColor, 
                           ),
                         ),
                       ),
@@ -86,11 +86,11 @@ class OpcionesView extends StatelessWidget {
             elevation: 2,
             margin: const EdgeInsets.only(bottom: 12),
             child: SwitchListTile(
-              title: const Text("Modo Oscuro", style: AppTextStyles.subtitle),
-              subtitle: Text(isDarkMode ? "Activado" : "Desactivado", style: AppTextStyles.body),
+              title: Text("Modo Oscuro", style: Theme.of(context).textTheme.titleMedium), 
+              subtitle: Text(isDarkMode ? "Activado" : "Desactivado", style: Theme.of(context).textTheme.bodyMedium), // 
               secondary: Icon(
                 isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                color: AppColors.primary,
+                color: Theme.of(context).primaryColor, 
               ),
               value: isDarkMode,
               onChanged: (value) async {
@@ -99,10 +99,10 @@ class OpcionesView extends StatelessWidget {
             ),
           ),
           
-          _buildOption("Notificaciones y sonidos", Icons.notifications, () {}),
-          _buildOption("Soporte", Icons.help, () {}),
-          _buildOption("Términos y condiciones", Icons.description, () {}),
-          _buildOption("Cerrar sesión", Icons.logout, () {
+          _buildOption(context, "Notificaciones y sonidos", Icons.notifications, () {}),
+          _buildOption(context, "Soporte", Icons.help, () {}),
+          _buildOption(context, "Términos y condiciones", Icons.description, () {}),
+          _buildOption(context, "Cerrar sesión", Icons.logout, () {
             _showLogoutDialog(context);
           }),
         ],
@@ -110,15 +110,15 @@ class OpcionesView extends StatelessWidget {
     );
   }
 
-  Widget _buildOption(String title, IconData icon, [VoidCallback? onTap]) {
+  Widget _buildOption(BuildContext context, String title, IconData icon, [VoidCallback? onTap]) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConfig.borderRadius)),
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(title, style: AppTextStyles.subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
+        leading: Icon(icon, color: Theme.of(context).primaryColor), 
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium), 
+        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Theme.of(context).textTheme.bodyMedium?.color), // 
         onTap: onTap,
       ),
     );
@@ -128,15 +128,15 @@ class OpcionesView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar cierre de sesión'),
-        content: const Text('¿Estás seguro que deseas salir de la aplicación?'),
+        title: Text('Confirmar cierre de sesión', style: Theme.of(context).textTheme.titleMedium), 
+        content: Text('¿Estás seguro que deseas salir de la aplicación?', style: Theme.of(context).textTheme.bodyMedium), // 
         actions: [
           TextButton(
-            child: const Text('Cancelar'),
+            child: Text('Cancelar', style: Theme.of(context).textTheme.bodyMedium), 
             onPressed: () => Navigator.of(context).pop(),
           ),
           TextButton(
-            child: const Text('Salir'),
+            child: Text('Salir', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red)), // 
             onPressed: () {
               AuthManager().clearSession();
               Navigator.of(context).pop();

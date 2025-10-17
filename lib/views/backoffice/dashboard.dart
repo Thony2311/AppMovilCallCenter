@@ -115,22 +115,73 @@ class _DashboardContent extends StatelessWidget {
       child: Padding(
         key: ValueKey(total),
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Header Section
-            _buildHeaderSection(context, total),
-            const SizedBox(height: 24),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // For web, use a more responsive layout
+            final bool isWideScreen = constraints.maxWidth > 600;
             
-            // Chart Section
-            Expanded(
-              child: _buildChartSection(data, total),
-            ),
-            
-            // Legend Section
-            _buildLegendSection(context, data),
-          ],
+            if (isWideScreen) {
+              // Wide screen layout (web/tablet)
+              return _buildWideLayout(context, data, total);
+            } else {
+              // Mobile layout
+              return _buildMobileLayout(context, data, total);
+            }
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context, Map<String, int> data, int total) {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header Section
+          _buildHeaderSection(context, total),
+          const SizedBox(height: 24),
+          
+          // Chart Section - Fixed height for mobile
+          SizedBox(
+            height: 300, // Fixed height to prevent overflow
+            child: _buildChartSection(data, total),
+          ),
+          
+          // Legend Section
+          const SizedBox(height: 24),
+          _buildLegendSection(context, data),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideLayout(BuildContext context, Map<String, int> data, int total) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left side - Chart
+        Expanded(
+          flex: 2,
+          child: Column(
+            children: [
+              _buildHeaderSection(context, total),
+              const SizedBox(height: 24),
+              Expanded(
+                child: _buildChartSection(data, total),
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(width: 24),
+        
+        // Right side - Legend
+        Expanded(
+          flex: 1,
+          child: _buildLegendSection(context, data),
+        ),
+      ],
     );
   }
 
@@ -180,7 +231,7 @@ class _DashboardContent extends StatelessWidget {
             PieChartData(
               startDegreeOffset: 180,
               borderData: FlBorderData(show: false),
-              centerSpaceRadius: 60,
+              centerSpaceRadius: 40, // Reduced for better fit
               sectionsSpace: 3,
               sections: _buildChartSections(data, total),
             ),
@@ -223,30 +274,30 @@ class _DashboardContent extends StatelessWidget {
       color: color,
       value: value,
       title: "${percentage.toStringAsFixed(1)}%",
-      radius: 75,
+      radius: 60, // Reduced radius for better fit
       titleStyle: TextStyle(
         color: Colors.white,
         fontWeight: FontWeight.bold,
-        fontSize: 14,
+        fontSize: 12, // Smaller font for web
         shadows: [Shadow(color: Colors.black.withAlpha(64), blurRadius: 3)],
       ),
       badgeWidget: _buildChartBadge(title, color),
-      badgePositionPercentageOffset: 0.2,
+      badgePositionPercentageOffset: 0.15,
     );
   }
 
   Widget _buildChartBadge(String title, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: color.withAlpha(230), 
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         title,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 10,
+          fontSize: 9, // Smaller font for badges
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -255,7 +306,6 @@ class _DashboardContent extends StatelessWidget {
 
   Widget _buildLegendSection(BuildContext context, Map<String, int> data) {
     return Container(
-      margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor, 
@@ -270,6 +320,7 @@ class _DashboardContent extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             "Desglose por categoría",
@@ -292,7 +343,7 @@ class _DashboardContent extends StatelessWidget {
         case "Ventas por auditar":
           return AppColors.pendientes;
         default:
-          return Theme.of(context).primaryColor; // ✅ Theme-aware
+          return Theme.of(context).primaryColor;
       }
     }
 
