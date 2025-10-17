@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../constants/app_constants.dart';
+//import '../../constants/app_constants.dart';
 
 class AgenteKPIView extends StatelessWidget {
   const AgenteKPIView({super.key});
 
-  Widget _barIndicator(String label, double value) {
+  Widget _barIndicator(String label, double value, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.body),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium), 
         const SizedBox(height: 4),
         LinearProgressIndicator(
           value: value,
-          backgroundColor: AppColors.secondary,
-          color: AppColors.primary,
+          backgroundColor: Theme.of(context).cardColor, 
+          color: Theme.of(context).primaryColor, 
           minHeight: 8,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -26,25 +26,26 @@ class AgenteKPIView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.background,
-        title: const Text("Reportes", style: AppTextStyles.title),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
+        title: Text("Reportes", style: Theme.of(context).textTheme.titleLarge), 
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            const Text("Llamadas", style: AppTextStyles.subtitle),
+            Text("Llamadas", style: Theme.of(context).textTheme.titleMedium), 
             const SizedBox(height: 8),
-            const Text("Realizadas: 150 | Atendidas: 100 | Abandonadas: 50"),
+            Text("Realizadas: 150 | Atendidas: 100 | Abandonadas: 50", 
+                style: Theme.of(context).textTheme.bodyMedium), 
             const SizedBox(height: 20),
-            _barIndicator("Nivel de servicio", 0.8),
-            _barIndicator("Tasa de abandono", 0.4),
-            _barIndicator("Tiempo medio de espera", 0.6),
+            _barIndicator("Nivel de servicio", 0.8, context),
+            _barIndicator("Tasa de abandono", 0.4, context),
+            _barIndicator("Tiempo medio de espera", 0.6, context),
             const SizedBox(height: 20),
-            const Text("Número de llamadas", style: AppTextStyles.subtitle),
+            Text("Número de llamadas", style: Theme.of(context).textTheme.titleMedium), 
             const SizedBox(height: 10),
             SizedBox(
               height: 180,
@@ -63,7 +64,7 @@ class AgenteKPIView extends StatelessWidget {
                         const FlSpot(4, 6),
                       ],
                       isCurved: true,
-                      color: AppColors.primary,
+                      color: Theme.of(context).primaryColor, 
                       barWidth: 3,
                       dotData: const FlDotData(show: false),
                     ),

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'constants/app_constants.dart';
 import 'views/backoffice/dashboard.dart';
 import 'views/backoffice/ventas.dart';
 import 'views/backoffice/opciones.dart';
 import 'views/home.dart';
-
+import 'config/theme_manager.dart'; 
 void main() {
-  runApp(const CallCenterApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeManager(),
+      child: const CallCenterApp(), 
+    ),
+  );
 }
 
 class CallCenterApp extends StatelessWidget {
@@ -14,18 +20,14 @@ class CallCenterApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeManager = Provider.of<ThemeManager>(context);
+    
     return MaterialApp(
       title: 'BackOffice Call Center',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: AppColors.primary,
-        scaffoldBackgroundColor: AppColors.background,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: AppColors.primary,
-          secondary: AppColors.accent,
-        ),
-      ),
+      theme: AppThemes.lightTheme,
+      darkTheme: AppThemes.darkTheme,
+      themeMode: themeManager.themeMode,
       home: const SplashScreen(),
     );
   }

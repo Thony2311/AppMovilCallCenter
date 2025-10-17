@@ -11,12 +11,11 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener el token del AuthManager
     final token = AuthManager().token;
-    
+
     return BlocProvider(
-      create: (_) => DashboardBloc(DashboardService(token: token))
-        ..add(CargarDashboard()),
+      create: (_) =>
+          DashboardBloc(DashboardService(token: token))..add(CargarDashboard()),
       child: const _DashboardContent(),
     );
   }
@@ -28,12 +27,13 @@ class _DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        title: const Text("Dashboard", style: AppTextStyles.headers),
+        elevation: 0,
+        backgroundColor: Theme.of(context).primaryColor, 
+        title: Text("Dashboard", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
         centerTitle: false,
         actions: [
-          // Botón de refrescar
           BlocBuilder<DashboardBloc, DashboardState>(
             builder: (context, state) {
               return IconButton(
@@ -51,53 +51,45 @@ class _DashboardContent extends StatelessWidget {
       body: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           if (state is DashboardCargando) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           } else if (state is DashboardError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.mensaje,
-                    style: AppTextStyles.subtitle,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<DashboardBloc>().add(CargarDashboard());
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Reintentar"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _errorView(context, state.mensaje);
           } else if (state is DashboardCargado) {
-            return _buildDashboardContent(context, state.stats);
+            return _buildDashboard(context, state.stats);
           }
 
-          return const Center(
-            child: Text("Iniciando..."),
-          );
+          return Center(child: Text("Cargando datos...", style: Theme.of(context).textTheme.bodyMedium));
         },
       ),
     );
   }
 
-  Widget _buildDashboardContent(BuildContext context, DashboardStats stats) {
+  Widget _errorView(BuildContext context, String mensaje) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 60, color: Theme.of(context).colorScheme.error),
+          const SizedBox(height: 16),
+          Text(mensaje, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<DashboardBloc>().add(CargarDashboard());
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text("Reintentar"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor, 
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context, DashboardStats stats) {
     final data = {
       "Llamadas reportadas": stats.llamadasReportadas,
       "Ventas auditadas": stats.ventasAuditadas,
@@ -105,123 +97,260 @@ class _DashboardContent extends StatelessWidget {
     };
 
     final total = data.values.reduce((a, b) => a + b);
-
-    // Si no hay datos, mostrar mensaje
     if (total == 0) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 64,
-              color: AppColors.textSecondary,
-            ),
-            SizedBox(height: 16),
-            Text(
-              "No hay datos disponibles",
-              style: AppTextStyles.subtitle,
-            ),
+            Icon(Icons.inbox_outlined, size: 60, color: Theme.of(context).textTheme.bodyMedium?.color), 
+            const SizedBox(height: 12),
+            Text("No hay datos disponibles", style: Theme.of(context).textTheme.titleMedium),
           ],
         ),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return AnimatedSwitcher(
+      duration: AppConfig.animationDuration,
+      child: Padding(
+        key: ValueKey(total),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Header Section
+            _buildHeaderSection(context, total),
+            const SizedBox(height: 24),
+            
+            // Chart Section
+            Expanded(
+              child: _buildChartSection(data, total),
+            ),
+            
+            // Legend Section
+            _buildLegendSection(context, data),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderSection(BuildContext context, int total) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withAlpha(40),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         children: [
-          const SizedBox(height: 10),
-          const Text(
-            "Resumen de Actividades",
-            style: AppTextStyles.title,
-            textAlign: TextAlign.center,
+          Text(
+            "Resumen General",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).primaryColor),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 8),
+          Text(
+            "Total de actividades: $total",
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(178),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildChartSection(Map<String, int> data, int total) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutBack,
+      tween: Tween(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: PieChart(
+            PieChartData(
+              startDegreeOffset: 180,
+              borderData: FlBorderData(show: false),
+              centerSpaceRadius: 60,
+              sectionsSpace: 3,
+              sections: _buildChartSections(data, total),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<PieChartSectionData> _buildChartSections(Map<String, int> data, int total) {
+    return [
+      _buildChartSectionData(
+        value: data["Llamadas reportadas"]!.toDouble(),
+        percentage: (data["Llamadas reportadas"]! / total) * 100,
+        color: AppColors.reportadas,
+        title: "Reportadas",
+      ),
+      _buildChartSectionData(
+        value: data["Ventas auditadas"]!.toDouble(),
+        percentage: (data["Ventas auditadas"]! / total) * 100,
+        color: AppColors.auditadas,
+        title: "Auditadas",
+      ),
+      _buildChartSectionData(
+        value: data["Ventas por auditar"]!.toDouble(),
+        percentage: (data["Ventas por auditar"]! / total) * 100,
+        color: AppColors.pendientes,
+        title: "Pendientes",
+      ),
+    ];
+  }
+
+  PieChartSectionData _buildChartSectionData({
+    required double value,
+    required double percentage,
+    required Color color,
+    required String title,
+  }) {
+    return PieChartSectionData(
+      color: color,
+      value: value,
+      title: "${percentage.toStringAsFixed(1)}%",
+      radius: 75,
+      titleStyle: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
+        shadows: [Shadow(color: Colors.black.withAlpha(64), blurRadius: 3)],
+      ),
+      badgeWidget: _buildChartBadge(title, color),
+      badgePositionPercentageOffset: 0.2,
+    );
+  }
+
+  Widget _buildChartBadge(String title, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(230), 
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendSection(BuildContext context, Map<String, int> data) {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Desglose por categoría",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor),
+          ),
+          const SizedBox(height: 12),
+          ...data.entries.map((e) => _buildLegendItem(context, e.key, e.value)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(BuildContext context, String label, int value) {
+    Color getItemColor() {
+      switch (label) {
+        case "Llamadas reportadas":
+          return AppColors.reportadas;
+        case "Ventas auditadas":
+          return AppColors.auditadas;
+        case "Ventas por auditar":
+          return AppColors.pendientes;
+        default:
+          return Theme.of(context).primaryColor; // ✅ Theme-aware
+      }
+    }
+
+    final color = getItemColor();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary.withAlpha(25), 
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        border: Border.all(color: color.withAlpha(80)), 
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withAlpha(100), 
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          
           Expanded(
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 4,
-                centerSpaceRadius: 50,
-                borderData: FlBorderData(show: false),
-                sections: [
-                  PieChartSectionData(
-                    color: AppColors.primary.withOpacity(0.9),
-                    value: data["Llamadas reportadas"]!.toDouble(),
-                    title:
-                        "${((data["Llamadas reportadas"]! / total) * 100).toStringAsFixed(1)}%",
-                    radius: 80,
-                    titleStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  PieChartSectionData(
-                    color: AppColors.accent,
-                    value: data["Ventas auditadas"]!.toDouble(),
-                    title:
-                        "${((data["Ventas auditadas"]! / total) * 100).toStringAsFixed(1)}%",
-                    radius: 80,
-                    titleStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  PieChartSectionData(
-                    color: AppColors.tertiary,
-                    value: data["Ventas por auditar"]!.toDouble(),
-                    title:
-                        "${((data["Ventas por auditar"]! / total) * 100).toStringAsFixed(1)}%",
-                    radius: 80,
-                    titleStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-
-          const SizedBox(height: 40),
-
-          Column(
-            children: data.entries.map((e) {
-              Color color;
-              switch (e.key) {
-                case "Llamadas reportadas":
-                  color = AppColors.primary.withOpacity(0.9);
-                  break;
-                case "Ventas auditadas":
-                  color = AppColors.accent;
-                  break;
-                default:
-                  color = AppColors.tertiary;
-              }
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 18, height: 18, color: color),
-                    const SizedBox(width: 8),
-                    Text(
-                      "${e.key} — ${e.value}",
-                      style: AppTextStyles.body,
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+          
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withAlpha(20), 
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              value.toString(),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 }
-

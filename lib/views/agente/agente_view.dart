@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_constants.dart';
+//import '../../constants/app_constants.dart';
 import 'agente_dashboard.dart';
 import 'agente_kpi.dart';
 import 'agente_opciones.dart';
@@ -26,8 +26,8 @@ class _AgenteMainViewState extends State<AgenteMainView> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        selectedItemColor: Theme.of(context).primaryColor, 
+        unselectedItemColor: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153), 
         onTap: (index) => setState(() => _selectedIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),

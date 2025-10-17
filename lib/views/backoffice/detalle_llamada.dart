@@ -11,30 +11,30 @@ class DetalleLlamadaView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        title: const Text("Detalle de la llamada", style: AppTextStyles.headers),
+        backgroundColor: Theme.of(context).primaryColor, 
+        title: Text("Detalle de la llamada", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.secondary,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(AppConfig.borderRadius),
           ),
           padding: const EdgeInsets.all(16),
           child: ListView(
             children: [
-              Text("Cliente: ${venta.cliente}", style: AppTextStyles.subtitle),
+              Text("Cliente: ${venta.cliente}", style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
-              Text("Estado: ${venta.status}", style: AppTextStyles.body),
+              Text("Estado: ${venta.status}", style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 8),
-              Text("Monto: \$${venta.monto.toStringAsFixed(2)}", style: AppTextStyles.body),
+              Text("Monto: \$${venta.monto.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
               const Divider(height: 30),
-              const Text("Transcripción de la llamada", style: AppTextStyles.subtitle),
+              Text("Transcripción de la llamada", style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
                 venta.transcripcion ?? "No hay transcripción disponible.",
-                style: AppTextStyles.body,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),

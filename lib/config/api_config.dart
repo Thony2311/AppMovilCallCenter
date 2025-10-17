@@ -3,7 +3,7 @@
 class ApiConfig {
   // 🔹 IMPORTANTE: Reemplazar con la URL real de tu EC2
   // Ejemplo: 'http://ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com:8000'
-  static const String baseUrl = 'http://52.207.69.237:3500/api';
+  static const String baseUrl = 'http://100.27.207.32:3500/api';
   
   // ⏱️ Timeouts para las peticiones
   static const Duration connectionTimeout = Duration(seconds: 30);

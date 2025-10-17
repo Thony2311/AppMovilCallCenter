@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../config/auth_manager.dart';
+import '../../config/theme_manager.dart'; 
 import '../login.dart';
 
 class OpcionesView extends StatelessWidget {
@@ -8,13 +10,13 @@ class OpcionesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener datos del usuario desde AuthManager
     final authManager = AuthManager();
+    final themeManager = Provider.of<ThemeManager>(context); 
     final nombre = authManager.nombre ?? 'Usuario';
     final email = authManager.email ?? 'usuario@callcenter.com';
-    
-    // Obtener la inicial del nombre para el avatar
     final inicial = nombre.isNotEmpty ? nombre[0].toUpperCase() : 'U';
+    
+    final isDarkMode = themeManager.isDarkMode;
     
     return Scaffold(
       appBar: AppBar(
@@ -59,7 +61,7 @@ class OpcionesView extends StatelessWidget {
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.2),
+                          color: AppColors.primary.withAlpha(51),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -77,40 +79,31 @@ class OpcionesView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 30),
-          _buildOption("Tema", Icons.brightness_6),
-          _buildOption("Notificaciones y sonidos", Icons.notifications),
-          _buildOption("Soporte", Icons.help),
-          _buildOption("Términos y condiciones", Icons.description),
-          _buildOption("Cerrar sesión", Icons.logout, () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Confirmar cierre de sesión'),
-                content: const Text('¿Estás seguro que deseas salir de la aplicación?'),
-                actions: [
-                  TextButton(
-                    child: const Text('Cancelar'),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  TextButton(
-                    child: const Text('Salir'),
-                    onPressed: () {
-                      // Limpiar la sesión del usuario
-                      AuthManager().clearSession();
-                      
-                      // Cerrar el diálogo
-                      Navigator.of(context).pop();
-                      
-                      // Navegar al login y limpiar todas las rutas anteriores
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const LoginView()),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                ],
+          
+          // THEME TOGGLE
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConfig.borderRadius)),
+            elevation: 2,
+            margin: const EdgeInsets.only(bottom: 12),
+            child: SwitchListTile(
+              title: const Text("Modo Oscuro", style: AppTextStyles.subtitle),
+              subtitle: Text(isDarkMode ? "Activado" : "Desactivado", style: AppTextStyles.body),
+              secondary: Icon(
+                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: AppColors.primary,
               ),
-            );
+              value: isDarkMode,
+              onChanged: (value) async {
+                await themeManager.toggleTheme(); 
+              },
+            ),
+          ),
+          
+          _buildOption("Notificaciones y sonidos", Icons.notifications, () {}),
+          _buildOption("Soporte", Icons.help, () {}),
+          _buildOption("Términos y condiciones", Icons.description, () {}),
+          _buildOption("Cerrar sesión", Icons.logout, () {
+            _showLogoutDialog(context);
           }),
         ],
       ),
@@ -127,6 +120,33 @@ class OpcionesView extends StatelessWidget {
         title: Text(title, style: AppTextStyles.subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
         onTap: onTap,
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar cierre de sesión'),
+        content: const Text('¿Estás seguro que deseas salir de la aplicación?'),
+        actions: [
+          TextButton(
+            child: const Text('Cancelar'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: const Text('Salir'),
+            onPressed: () {
+              AuthManager().clearSession();
+              Navigator.of(context).pop();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginView()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
       ),
     );
   }

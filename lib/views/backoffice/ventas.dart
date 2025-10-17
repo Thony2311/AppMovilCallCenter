@@ -19,28 +19,27 @@ class _VentasViewState extends State<VentasView> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener el token del AuthManager
     final token = AuthManager().token;
     
     return BlocProvider(
       create: (_) => VentasBloc(ApiService(token: token))..add(CargarVentas()),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor, //  
         appBar: AppBar(
-          backgroundColor: AppColors.primary,
-          title: const Text(
+          backgroundColor: Theme.of(context).primaryColor, 
+          title: Text(
             "Listado de llamadas",
-            style: AppTextStyles.headers
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)
           ),
           centerTitle: false,
           elevation: 4,
-          shadowColor: AppColors.primary.withAlpha(80),
+          shadowColor: Theme.of(context).primaryColor.withAlpha(80), 
         ),
         body: Column(
           children: [
             const SizedBox(height: 12),
 
-            // 🔹 Filtro estilizado con efecto 3D
+            // Filtro
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: BlocBuilder<VentasBloc, VentasState>(
@@ -51,17 +50,19 @@ class _VentasViewState extends State<VentasView> {
                   return AnimatedContainer(
                     duration: AppConfig.animationDuration,
                     decoration: BoxDecoration(
-                      color: AppColors.secondary,
+                      color: Theme.of(context).cardColor, 
                       borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                      border: Border.all(color: AppColors.primary.withAlpha(50)),
+                      border: Border.all(color: Theme.of(context).primaryColor.withAlpha(50)), 
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Theme.of(context).brightness == Brightness.light 
+                              ? Colors.white.withAlpha(204) 
+                              : Colors.black.withAlpha(80),
                           offset: const Offset(-2, -2),
                           blurRadius: 3,
                         ),
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withAlpha(25),
                           offset: const Offset(2, 2),
                           blurRadius: 4,
                         ),
@@ -70,14 +71,12 @@ class _VentasViewState extends State<VentasView> {
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        dropdownColor: AppColors.secondary,
+                        dropdownColor: Theme.of(context).cardColor, 
                         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: Theme.of(context).textTheme.bodyMedium, 
                         value: currentFilter,
                         isExpanded: true,
-                        //isDense: true, // Makes the button itself more compact
-                        //menuMaxHeight: 200, // Limits the menu height to prevent strange positioning
-                        icon: const Icon(Icons.filter_alt, color: AppColors.primary),
+                        icon: Icon(Icons.filter_alt, color: Theme.of(context).primaryColor), 
                         items: const [
                           DropdownMenuItem(value: "Todas", child: Text("Todas")),
                           DropdownMenuItem(value: "Ventas auditadas", child: Text("Ventas auditadas")),
@@ -99,7 +98,7 @@ class _VentasViewState extends State<VentasView> {
 
             const SizedBox(height: 10),
 
-            // 🔹 Lista de ventas
+            // Lista de ventas
             Expanded(
               child: BlocBuilder<VentasBloc, VentasState>(
                 builder: (context, state) {
@@ -108,7 +107,7 @@ class _VentasViewState extends State<VentasView> {
                   } else if (state is VentasCargadas) {
                     final ventas = state.visibles;
                     if (ventas.isEmpty) {
-                      return const Center(child: Text("No hay ventas disponibles."));
+                      return Center(child: Text("No hay ventas disponibles.", style: Theme.of(context).textTheme.bodyMedium));
                     }
 
                     final totalPages = (ventas.length / _itemsPerPage).ceil();
@@ -128,7 +127,7 @@ class _VentasViewState extends State<VentasView> {
                               final venta = visibles[index];
                               return InkWell(
                                 borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                                splashColor: AppColors.accent.withAlpha(30),
+                                splashColor: Theme.of(context).colorScheme.secondary.withAlpha(30), 
                                 highlightColor: Colors.transparent,
                                 onTap: () {
                                   Navigator.push(
@@ -142,16 +141,18 @@ class _VentasViewState extends State<VentasView> {
                                   duration: AppConfig.animationDuration,
                                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.secondary,
+                                    color: Theme.of(context).cardColor, 
                                     borderRadius: BorderRadius.circular(AppConfig.borderRadius),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.white.withOpacity(0.8),
+                                        color: Theme.of(context).brightness == Brightness.light 
+                                            ? Colors.white.withAlpha(204) 
+                                            : Colors.black.withAlpha(76),
                                         offset: const Offset(-2, -2),
                                         blurRadius: 3,
                                       ),
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
+                                        color: Colors.black.withAlpha(20),
                                         offset: const Offset(2, 2),
                                         blurRadius: 6,
                                       ),
@@ -159,24 +160,24 @@ class _VentasViewState extends State<VentasView> {
                                   ),
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                      backgroundColor: AppColors.primary,
+                                      backgroundColor: Theme.of(context).primaryColor, 
                                       child: const Icon(Icons.person, color: Colors.white),
                                     ),
                                     title: Text(
                                       venta.cliente,
-                                      style: AppTextStyles.subtitle,
+                                      style: Theme.of(context).textTheme.titleMedium,
                                     ),
                                     subtitle: Row(
                                       children: [
-                                        const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+                                        Icon(Icons.access_time, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)), 
                                         const SizedBox(width: 4),
-                                        Text("Duración: ${venta.duracion}", style: AppTextStyles.body),
+                                        Text("Duración: ${venta.duracion}", style: Theme.of(context).textTheme.bodyMedium),
                                       ],
                                     ),
-                                    trailing: const Icon(
+                                    trailing: Icon(
                                       Icons.arrow_forward_ios,
                                       size: 16,
-                                      color: AppColors.textSecondary,
+                                      color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153), 
                                     ),
                                   ),
                                 ),
@@ -185,7 +186,7 @@ class _VentasViewState extends State<VentasView> {
                           ),
                         ),
 
-                        // 🔹 Paginación
+                        // Paginación
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
@@ -198,7 +199,7 @@ class _VentasViewState extends State<VentasView> {
                                 icon: const Icon(Icons.arrow_back_ios_new, size: 16),
                                 label: const Text(""),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  backgroundColor: Theme.of(context).primaryColor, 
                                   disabledBackgroundColor: Colors.grey.shade400,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -211,7 +212,7 @@ class _VentasViewState extends State<VentasView> {
                               const SizedBox(width: 20),
                               Text(
                                 "Página ${_currentPage + 1} de $totalPages",
-                                style: AppTextStyles.body,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               const SizedBox(width: 20),
                               ElevatedButton.icon(
@@ -221,7 +222,7 @@ class _VentasViewState extends State<VentasView> {
                                 icon: const Icon(Icons.arrow_forward_ios, size: 16),
                                 label: const Text(""),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  backgroundColor: Theme.of(context).primaryColor, 
                                   disabledBackgroundColor: Colors.grey.shade400,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -237,7 +238,7 @@ class _VentasViewState extends State<VentasView> {
                       ],
                     );
                   } else if (state is ErrorVentas) {
-                    return Center(child: Text(state.mensaje));
+                    return Center(child: Text(state.mensaje, style: Theme.of(context).textTheme.bodyMedium));
                   }
                   return const SizedBox.shrink();
                 },

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final VoidCallback? onThemeUpdated;
+  const SplashScreen({super.key, this.onThemeUpdated});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -71,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
                       borderRadius: BorderRadius.circular(100),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withAlpha(22),
                           blurRadius: 10,
                         ),
                       ],
