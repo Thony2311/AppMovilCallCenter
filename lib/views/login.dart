@@ -58,12 +58,11 @@ class _LoginFormState extends State<_LoginForm> {
                     MaterialPageRoute(builder: (_) => const MainScreen()),
                   );
                 }
-              } else if (state is LoginFailure) {
-                // <-- CORRECCIÓN: quitar coma dentro de los paréntesis de of(...)
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(state.message)));
-              }
+                } else if (state is LoginFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message)),
+                  );
+                }
             },
             builder: (context, state) {
               final bloc = context.read<LoginBloc>();
@@ -73,7 +72,7 @@ class _LoginFormState extends State<_LoginForm> {
                   // Logo fuera del rectángulo
                   Container(
                     margin: const EdgeInsets.only(bottom: 35),
-                    child: CircleAvatar(
+                      child: const CircleAvatar(
                       radius: 60,
                       backgroundColor: AppColors.background,
                       child: Icon(
@@ -87,19 +86,19 @@ class _LoginFormState extends State<_LoginForm> {
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
+                        decoration: BoxDecoration(
                         color: AppColors.background,
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: const Color.fromARGB(255, 35, 45, 77),
+                            color: Color.fromARGB(255, 35, 45, 77),
                             blurRadius: 10,
-                            offset: const Offset(5, 5),
+                            offset: Offset(5, 5),
                           ),
                           BoxShadow(
-                            color: const Color.fromARGB(255, 35, 45, 77),
+                            color: Color.fromARGB(255, 35, 45, 77),
                             blurRadius: 5,
-                            offset: const Offset(10, 10),
+                            offset: Offset(10, 10),
                           ),
                         ],
                       ),

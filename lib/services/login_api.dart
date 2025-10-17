@@ -37,8 +37,23 @@ class LoginApi {
         
         // Algunos backends envuelven la data en un objeto "data" o "user"
         final userData = jsonData['data'] ?? jsonData['user'] ?? jsonData;
-        
-        return UsuarioModel.fromJson(userData);
+
+        if (userData is Map<String, dynamic>) {
+          return UsuarioModel.fromJson(userData);
+        }
+
+        // A veces viene como String JSON dentro del campo
+        if (userData is String) {
+          try {
+            final parsed = jsonDecode(userData);
+            if (parsed is Map<String, dynamic>) return UsuarioModel.fromJson(parsed);
+          } catch (e) {
+            AppLogger.warn('userData string no es JSON válido: $e', name: 'LoginApi.login');
+          }
+        }
+
+        AppLogger.warn('Formato inesperado en userData: ${userData.runtimeType}', name: 'LoginApi.login');
+        return null;
       } else if (response.statusCode == 401) {
         // Credenciales incorrectas
         return null;

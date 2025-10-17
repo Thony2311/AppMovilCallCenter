@@ -18,13 +18,21 @@ class UsuarioModel {
   /// Parsea la respuesta JSON de la API
   factory UsuarioModel.fromJson(Map<String, dynamic> json) {
     return UsuarioModel(
-      id: json['id'] as int?,
-      username: json['username'] ?? json['usuario'] ?? '',
-      role: json['role'] ?? json['rol'] ?? json['tipo'] ?? '',
-      contrasena: json['token'] ?? json['access_token'] ?? '',
-      email: json['email'] as String?,
-      nombre: json['nombre'] ?? json['name'] as String?,
+      id: (json['id'] is int) ? json['id'] as int : (int.tryParse('${json['id']}')),
+  username: _asString(json['username'] ?? json['usuario'] ?? '') ?? '',
+  role: _asString(json['role'] ?? json['rol'] ?? json['tipo'] ?? '') ?? '',
+  contrasena: _asString(json['token'] ?? json['access_token'] ?? '') ?? '',
+  email: _asString(json['email']),
+  nombre: _asString(json['nombre'] ?? json['name']),
     );
+  }
+
+  // Helper interno para convertir a String de forma segura
+  static String? _asString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is num) return value.toString();
+    return value.toString();
   }
 
   /// Convierte el modelo a JSON para enviar a la API

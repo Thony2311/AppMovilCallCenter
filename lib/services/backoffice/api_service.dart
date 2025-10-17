@@ -32,15 +32,39 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        
-        // La respuesta puede venir como array directo o envuelto en "data"
-        final List<dynamic> ventasJson = jsonData is List 
-            ? jsonData 
-            : (jsonData['data'] ?? jsonData['ventas'] ?? []);
 
-        return ventasJson
-            .map((json) => Venta.fromJson(json as Map<String, dynamic>))
-            .toList();
+        // Normalizar a lista de items: la API puede devolver list, map con data o un solo objeto
+        List<dynamic> rawList = [];
+        if (jsonData is List) {
+          rawList = jsonData;
+        } else if (jsonData is Map<String, dynamic>) {
+          final maybe = jsonData['data'] ?? jsonData['ventas'] ?? jsonData;
+          if (maybe is List) {
+            rawList = maybe;
+          } else if (maybe is Map) {
+            rawList = [maybe];
+          }
+        } else {
+          AppLogger.warn('Formato inesperado en fetchSales: ${jsonData.runtimeType}',
+              name: 'ApiService.fetchSales');
+          return [];
+        }
+
+        final ventas = <Venta>[];
+        for (final item in rawList) {
+          if (item is Map<String, dynamic>) {
+            try {
+              ventas.add(Venta.fromJson(item));
+            } catch (e) {
+              AppLogger.warn('Error parseando venta item: $e', name: 'ApiService.fetchSales');
+            }
+          } else {
+            AppLogger.warn('Venta item no es Map, se omite: ${item.runtimeType}',
+                name: 'ApiService.fetchSales');
+          }
+        }
+
+        return ventas;
       } else {
     AppLogger.warn('Error obteniendo ventas: ${response.statusCode}',
       name: 'ApiService.fetchSales');
@@ -72,7 +96,13 @@ class ApiService {
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         final ventaJson = jsonData['data'] ?? jsonData['venta'] ?? jsonData;
-        return Venta.fromJson(ventaJson);
+        if (ventaJson is Map<String, dynamic>) {
+          return Venta.fromJson(ventaJson);
+        } else {
+          AppLogger.warn('Detalle de venta en formato inesperado: ${ventaJson.runtimeType}',
+              name: 'ApiService.fetchVentaDetail');
+          return null;
+        }
       } else {
     AppLogger.warn('Error obteniendo detalle de venta: ${response.statusCode}',
       name: 'ApiService.fetchVentaDetail');

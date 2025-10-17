@@ -22,22 +22,22 @@ class DashboardStats {
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
     return DashboardStats(
-      llamadasReportadas: json['llamadas_reportadas'] ?? 
-                         json['reportadas'] ?? 
-                         json['llamadasReportadas'] ?? 0,
-      ventasAuditadas: json['ventas_auditadas'] ?? 
-                      json['auditadas'] ?? 
-                      json['ventasAuditadas'] ?? 0,
-      ventasPorAuditar: json['ventas_por_auditar'] ?? 
-                       json['pendientes'] ?? 
-                       json['ventasPorAuditar'] ?? 0,
-      totalVentas: json['total_ventas'] ?? 
-                  json['total'] ?? 
-                  json['totalVentas'] ?? 0,
+      llamadasReportadas: _asInt(json['llamadas_reportadas'] ?? json['reportadas'] ?? json['llamadasReportadas'] ?? 0),
+      ventasAuditadas: _asInt(json['ventas_auditadas'] ?? json['auditadas'] ?? json['ventasAuditadas'] ?? 0),
+      ventasPorAuditar: _asInt(json['ventas_por_auditar'] ?? json['pendientes'] ?? json['ventasPorAuditar'] ?? 0),
+      totalVentas: _asInt(json['total_ventas'] ?? json['total'] ?? json['totalVentas'] ?? 0),
       montoTotal: _parseDouble(json['monto_total'] ?? 
                               json['monto'] ?? 
                               json['montoTotal'] ?? 0),
     );
+  }
+
+  static int _asInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value.replaceAll(RegExp(r'[^0-9-]'), '')) ?? 0;
+    return 0;
   }
 
   static double _parseDouble(dynamic value) {
@@ -76,11 +76,26 @@ class DashboardService {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        
-        // La respuesta puede venir directa o envuelta en "data"
-        final statsJson = jsonData['data'] ?? jsonData['stats'] ?? jsonData;
-        
-        return DashboardStats.fromJson(statsJson);
+
+        // La respuesta puede venir como Map o List; normalizar a Map
+        dynamic statsJson;
+        if (jsonData is Map<String, dynamic>) {
+          statsJson = jsonData['data'] ?? jsonData['stats'] ?? jsonData;
+        } else if (jsonData is List && jsonData.isNotEmpty) {
+          statsJson = jsonData.first;
+        } else {
+          AppLogger.warn('Respuesta inesperada para dashboard stats: ${jsonData.runtimeType}',
+              name: 'DashboardService.fetchStats');
+          return null;
+        }
+
+        if (statsJson is Map<String, dynamic>) {
+          return DashboardStats.fromJson(statsJson);
+        } else {
+          AppLogger.warn('Dashboard stats no es un Map: ${statsJson.runtimeType}',
+              name: 'DashboardService.fetchStats');
+          return null;
+        }
       } else {
     AppLogger.warn('Error obteniendo stats del dashboard: ${response.statusCode}',
       name: 'DashboardService.fetchStats');
@@ -109,7 +124,16 @@ class DashboardService {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        return jsonData['data'] ?? jsonData;
+
+        if (jsonData is Map<String, dynamic>) {
+          final summary = jsonData['data'] ?? jsonData;
+          if (summary is Map<String, dynamic>) return summary;
+          // si viene en otro formato, envolverlo
+          return {'data': summary};
+        }
+
+        // si viene como lista o primitivo, envolver en un map bajo 'data'
+        return {'data': jsonData};
       } else {
     AppLogger.warn('Error obteniendo resumen del dashboard: ${response.statusCode}',
       name: 'DashboardService.fetchResumen');

@@ -13,7 +13,7 @@ class AppColors {
   static const Color error = Color(0xFFD32F2F); // Rojo error
   static const Color tertiary = Color.fromARGB(255, 66, 6, 78);
 
-   static const Color reportadas = Color(0xFF3A82F7); // Azul
+  static const Color reportadas = Color(0xFF3A82F7); // Azul
   static const Color auditadas = Color(0xFF5AC8B4);  // Teal
   static const Color pendientes = Color(0xFFFFAA5A);  // Naranja
 
@@ -35,7 +35,7 @@ class AppThemes {
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.background,
       cardColor: AppColors.surface,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -61,7 +61,7 @@ class AppThemes {
       primaryColor: AppColors.primaryDark,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       cardColor: AppColors.surfaceDark,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryDark,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -157,23 +157,23 @@ class AppInputDecorations {
       suffixIcon: suffixIcon,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-        borderSide: BorderSide(color: Colors.blueGrey[300]!),
+  borderSide: const BorderSide(color: Colors.blueGrey, ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-        borderSide: BorderSide(color: Colors.blueGrey[300]!),
+  borderSide: const BorderSide(color: Colors.blueGrey, ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-        borderSide: BorderSide(color: AppColors.primary, width: 2),
+  borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-        borderSide: BorderSide(color: AppColors.error, width: 2),
+  borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-        borderSide: BorderSide(color: AppColors.error, width: 2),
+  borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
       filled: true,
       fillColor: AppColors.inputBackground,

@@ -21,7 +21,7 @@ class VentasBloc extends Bloc<VentasEvent, VentasState> {
 
     on<FiltrarVentas>((event, emit) async {
       if (state is VentasCargadas) {
-        final current = (state as VentasCargadas);
+  final current = state as VentasCargadas;
         final filtered = event.filter == "Todas"
             ? current.ventas
             : current.ventas.where((s) {
