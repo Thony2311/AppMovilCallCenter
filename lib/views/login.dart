@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../constants/app_constants.dart';
 import '../blocs/login_bloc.dart';
 import '../views/agente/agente_view.dart';
-import '../main.dart'; // Para MainScreen
+import '../main.dart';
 
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
@@ -18,7 +18,7 @@ class LoginView extends StatelessWidget {
 }
 
 class _LoginForm extends StatefulWidget {
-  const _LoginForm({Key? key}) : super(key: key);
+  const _LoginForm();
 
   @override
   State<_LoginForm> createState() => _LoginFormState();
@@ -37,10 +37,62 @@ class _LoginFormState extends State<_LoginForm> {
     super.dispose();
   }
 
+  // Custom input decoration that works with both themes
+  InputDecoration _buildInputDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
+      ),
+      prefixIcon: Icon(icon, color: Theme.of(context).primaryColor),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withAlpha(128),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withAlpha(128),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        borderSide: BorderSide(
+          color: Theme.of(context).primaryColor,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.error,
+          width: 2,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.error,
+          width: 2,
+        ),
+      ),
+      filled: true,
+      fillColor: Theme.of(context).colorScheme.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Theme.of(context).primaryColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -59,10 +111,12 @@ class _LoginFormState extends State<_LoginForm> {
                   );
                 }
               } else if (state is LoginFailure) {
-                // <-- CORRECCIÓN: quitar coma dentro de los paréntesis de of(...)
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(state.message)));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
               }
             },
             builder: (context, state) {
@@ -70,36 +124,33 @@ class _LoginFormState extends State<_LoginForm> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo fuera del rectángulo
+                  // Logo
                   Container(
                     margin: const EdgeInsets.only(bottom: 35),
                     child: CircleAvatar(
                       radius: 60,
-                      backgroundColor: AppColors.background,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       child: Icon(
                         Icons.phone_in_talk,
                         size: 70,
-                        color: AppColors.primary,
+                        color: Theme.of(context).primaryColor,
                       ),
                     ),
                   ),
+                  
+                  // Login Card
                   Center(
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color.fromARGB(255, 35, 45, 77),
-                            blurRadius: 10,
-                            offset: const Offset(5, 5),
-                          ),
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 35, 45, 77),
-                            blurRadius: 5,
-                            offset: const Offset(10, 10),
+                            color: Colors.black.withAlpha(51),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
@@ -108,143 +159,149 @@ class _LoginFormState extends State<_LoginForm> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Título y subtítulo
-                            const Text(
+                            // Title
+                            Text(
                               "Iniciar Sesión",
-                              style: TextStyle(
-                                fontSize: 28,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              "call center",
+                            Text(
+                              "Call Center",
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Username Field
+                            TextFormField(
+                              controller: _userController,
                               style: TextStyle(
-                                fontSize: 16,
-                                color: AppColors.textSecondary
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'El usuario es requerido';
+                                }
+                                return null;
+                              },
+                              decoration: _buildInputDecoration(
+                                label: "Usuario",
+                                icon: Icons.person_2_outlined,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Password Field
+                            TextFormField(
+                              controller: _passController,
+                              obscureText: _obscurePassword,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'La contraseña es requerida';
+                                }
+                                return null;
+                              },
+                              decoration: _buildInputDecoration(
+                                label: "Contraseña",
+                                icon: Icons.lock_outline,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Forgot Password
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/recuperar');
+                                },
+                                child: Text(
+                                  "¿Olvidó su contraseña?",
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // Campo usuario
-                            TextFormField(
-                          controller: _userController,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'El usuario es requerido';
-                            }
-                            return null;
-                          },
-                          decoration: AppInputDecorations.textField(
-                            label: "Usuario",
-                            icon: Icons.person_2_outlined,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        // Campo contraseña con ojito
-                        TextFormField(
-                          controller: _passController,
-                          obscureText: _obscurePassword,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'La contraseña es requerida';
-                            }
-                            return null;
-                          },
-                          decoration: AppInputDecorations.textField(
-                            label: "Contraseña",
-                            icon: Icons.lock_outline,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: Colors.grey[600],
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // ¿Olvidó su contraseña?
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/recuperar');
-                            },
-                            child: const Text(
-                              "¿Olvidó su contraseña?",
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-                        // Botón iniciar sesión
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConfig.borderRadius,
-                                ),
-                              ),
-                              elevation: 6,
-                            ),
-                            onPressed: state is LoginLoading
-                                ? null
-                                : () {
-                                    if (_formKey.currentState?.validate() ??
-                                        false) {
-                                      bloc.add(
-                                        LoginSubmitted(
-                                          _userController.text.trim(),
-                                          _passController.text.trim(),
-                                        ),
-                                      );
-                                    }
-                                  },
-                            child: state is LoginLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text(
-                                    "Iniciar sesión",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+
+                            // Login Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AppConfig.borderRadius),
                                   ),
-                          ),
+                                  elevation: 4,
+                                ),
+                                onPressed: state is LoginLoading
+                                    ? null
+                                    : () {
+                                        if (_formKey.currentState?.validate() ?? false) {
+                                          bloc.add(
+                                            LoginSubmitted(
+                                              _userController.text.trim(),
+                                              _passController.text.trim(),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                child: state is LoginLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "Iniciar sesión",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          );
-        },
+                ],
+              );
+            },
+          ),
+        ),
       ),
-    ),
-  ),
-);
+    );
   }
 }
