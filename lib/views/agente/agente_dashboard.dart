@@ -2,8 +2,35 @@ import 'package:flutter/material.dart';
 import '../../constants/app_constants.dart';
 import 'dart:math' as math;
 
-class AgenteDashboardView extends StatelessWidget {
+class AgenteDashboardView extends StatefulWidget {
   const AgenteDashboardView({super.key});
+
+  @override
+  State<AgenteDashboardView> createState() => _AgenteDashboardViewState();
+}
+
+class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   Widget _squareMetricCard(String title, String value, IconData icon, BuildContext context) {
     return Expanded(
@@ -171,8 +198,10 @@ class AgenteDashboardView extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            children: [
             Row(
               children: [
                 _squareMetricCard("Llamadas atendidas hoy", "20", Icons.call, context),
@@ -188,6 +217,7 @@ class AgenteDashboardView extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
