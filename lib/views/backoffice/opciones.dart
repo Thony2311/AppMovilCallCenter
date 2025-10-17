@@ -27,56 +27,63 @@ class OpcionesView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Theme.of(context).colorScheme.secondary, 
-                child: Text(
-                  inicial,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          SizedBox(
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    _showProfileDialog(context, nombre, email, authManager.role);
+                  },
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Theme.of(context).colorScheme.secondary, 
+                    child: Text(
+                      inicial,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nombre,
-                      style: Theme.of(context).textTheme.titleMedium, 
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      email,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (authManager.role != null)
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withAlpha(51), 
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          authManager.role!.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor, 
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        nombre,
+                        style: Theme.of(context).textTheme.titleMedium, 
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        email,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (authManager.role != null)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor.withAlpha(51), 
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            authManager.role!.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor, 
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 30),
           
@@ -87,7 +94,6 @@ class OpcionesView extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             child: SwitchListTile(
               title: Text("Modo Oscuro", style: Theme.of(context).textTheme.titleMedium), 
-              subtitle: Text(isDarkMode ? "Activado" : "Desactivado", style: Theme.of(context).textTheme.bodyMedium), // 
               secondary: Icon(
                 isDarkMode ? Icons.dark_mode : Icons.light_mode,
                 color: Theme.of(context).primaryColor, 
@@ -145,6 +151,95 @@ class OpcionesView extends StatelessWidget {
                 (route) => false,
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProfileDialog(BuildContext context, String nombre, String email, String? role) {
+    // Datos mockeados adicionales
+    const String identificacion = 'CC-1234567890';
+    const String celular = '+57 300 1234567';
+    final String rolDisplay = role ?? 'Sin asignar';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Perfil',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  child: Text(
+                    nombre.isNotEmpty ? nombre[0].toUpperCase() : 'U',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildProfileField(context, 'Nombre', nombre),
+              _buildProfileField(context, 'Email', email),
+              _buildProfileField(context, 'Identificación', identificacion),
+              _buildProfileField(context, 'Celular', celular),
+              _buildProfileField(context, 'Rol', rolDisplay),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: Text('Cerrar', style: Theme.of(context).textTheme.bodyMedium),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileField(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            height: 45,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).dividerColor,
+              ),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ],
       ),
