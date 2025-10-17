@@ -5,6 +5,7 @@ import 'views/backoffice/dashboard.dart';
 import 'views/backoffice/ventas.dart';
 import 'views/backoffice/opciones.dart';
 import 'views/home.dart';
+import 'views/recuperar_contrasena.dart';
 import 'config/theme_manager.dart'; 
 void main() {
   runApp(
@@ -29,6 +30,9 @@ class CallCenterApp extends StatelessWidget {
       darkTheme: AppThemes.darkTheme,
       themeMode: themeManager.themeMode,
       home: const SplashScreen(),
+      routes: {
+        '/recuperar': (context) => const RecuperarContrasenaView(),
+      },
     );
   }
 }

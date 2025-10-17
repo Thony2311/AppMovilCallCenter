@@ -22,7 +22,7 @@ class DashboardView extends StatelessWidget {
 }
 
 class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({Key? key}) : super(key: key);
+  const _DashboardContent();
 
   @override
   Widget build(BuildContext context) {
