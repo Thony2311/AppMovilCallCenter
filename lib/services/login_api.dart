@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/usuario_model.dart';
 import '../config/api_config.dart';
+import '../utils/app_logger.dart';
 
 class LoginApi {
   /// Realiza el login contra la API en EC2
@@ -43,14 +44,15 @@ class LoginApi {
         return null;
       } else {
         // Otro error del servidor
-        print('Error en login: ${response.statusCode} - ${response.body}');
+        AppLogger.warn('Error en login: ${response.statusCode} - ${response.body}',
+            name: 'LoginApi.login');
         return null;
       }
     } on TimeoutException catch (e) {
-      print('Timeout en login: $e');
+      AppLogger.warn('Timeout en login: $e', name: 'LoginApi.login');
       return null;
     } catch (e) {
-      print('Error de conexión en login: $e');
+      AppLogger.error('Error de conexión en login: $e', name: 'LoginApi.login');
       // En desarrollo, puedes descomentar esto para ver el error completo
       // rethrow;
       return null;
@@ -69,7 +71,7 @@ class LoginApi {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error validando token: $e');
+      AppLogger.error('Error validando token: $e', name: 'LoginApi.validateToken');
       return false;
     }
   }
@@ -86,7 +88,7 @@ class LoginApi {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Error en logout: $e');
+      AppLogger.error('Error en logout: $e', name: 'LoginApi.logout');
       return false;
     }
   }

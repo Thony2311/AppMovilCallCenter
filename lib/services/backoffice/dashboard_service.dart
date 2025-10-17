@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../config/api_config.dart';
+import '../../utils/app_logger.dart';
 
 /// Modelo para las estadísticas del dashboard
 class DashboardStats {
@@ -81,14 +82,17 @@ class DashboardService {
         
         return DashboardStats.fromJson(statsJson);
       } else {
-        print('Error obteniendo stats del dashboard: ${response.statusCode}');
+    AppLogger.warn('Error obteniendo stats del dashboard: ${response.statusCode}',
+      name: 'DashboardService.fetchStats');
         return null;
       }
     } on TimeoutException catch (e) {
-      print('Timeout obteniendo stats del dashboard: $e');
+    AppLogger.warn('Timeout obteniendo stats del dashboard: $e',
+      name: 'DashboardService.fetchStats');
       return null;
     } catch (e) {
-      print('Error de conexión obteniendo stats del dashboard: $e');
+    AppLogger.error('Error de conexión obteniendo stats del dashboard: $e',
+      name: 'DashboardService.fetchStats');
       return null;
     }
   }
@@ -107,11 +111,13 @@ class DashboardService {
         final jsonData = jsonDecode(response.body);
         return jsonData['data'] ?? jsonData;
       } else {
-        print('Error obteniendo resumen del dashboard: ${response.statusCode}');
+    AppLogger.warn('Error obteniendo resumen del dashboard: ${response.statusCode}',
+      name: 'DashboardService.fetchResumen');
         return null;
       }
     } catch (e) {
-      print('Error obteniendo resumen del dashboard: $e');
+    AppLogger.error('Error obteniendo resumen del dashboard: $e',
+      name: 'DashboardService.fetchResumen');
       return null;
     }
   }
