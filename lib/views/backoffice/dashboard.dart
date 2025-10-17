@@ -114,7 +114,7 @@ class _DashboardContent extends StatelessWidget {
       duration: AppConfig.animationDuration,
       child: Padding(
         key: ValueKey(total),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: LayoutBuilder(
           builder: (context, constraints) {
             // For web, use a more responsive layout
@@ -140,16 +140,16 @@ class _DashboardContent extends StatelessWidget {
         children: [
           // Header Section
           _buildHeaderSection(context, total),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           
           // Chart Section - Fixed height for mobile
           SizedBox(
-            height: 300, // Fixed height to prevent overflow
+            height: 250,
             child: _buildChartSection(data, total),
           ),
           
           // Legend Section
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _buildLegendSection(context, data),
         ],
       ),
@@ -188,7 +188,7 @@ class _DashboardContent extends StatelessWidget {
   Widget _buildHeaderSection(BuildContext context, int total) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor, 
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
@@ -231,7 +231,7 @@ class _DashboardContent extends StatelessWidget {
             PieChartData(
               startDegreeOffset: 180,
               borderData: FlBorderData(show: false),
-              centerSpaceRadius: 40, // Reduced for better fit
+              centerSpaceRadius: 40,
               sectionsSpace: 3,
               sections: _buildChartSections(data, total),
             ),
@@ -301,7 +301,7 @@ PieChartSectionData _buildChartSectionData({
         title,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 9, // Smaller font for badges
+          fontSize: 9,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -310,7 +310,7 @@ PieChartSectionData _buildChartSectionData({
 
   Widget _buildLegendSection(BuildContext context, Map<String, int> data) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor, 
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
@@ -330,7 +330,7 @@ PieChartSectionData _buildChartSectionData({
             "Desglose por categoría",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           ...data.entries.map((e) => _buildLegendItem(context, e.key, e.value)),
         ],
       ),
@@ -354,8 +354,8 @@ PieChartSectionData _buildChartSectionData({
     final color = getItemColor();
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.secondary.withAlpha(25), 
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
