@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../../utils/app_logger.dart';
 import 'package:http/http.dart' as http;
 import '../../models/backoffice/venta_model.dart';
 import '../../config/api_config.dart';
@@ -41,14 +42,17 @@ class ApiService {
             .map((json) => Venta.fromJson(json as Map<String, dynamic>))
             .toList();
       } else {
-        print('Error obteniendo ventas: ${response.statusCode}');
+    AppLogger.warn('Error obteniendo ventas: ${response.statusCode}',
+      name: 'ApiService.fetchSales');
         return [];
       }
     } on TimeoutException catch (e) {
-      print('Timeout obteniendo ventas: $e');
+    AppLogger.warn('Timeout obteniendo ventas: $e',
+      name: 'ApiService.fetchSales');
       return [];
     } catch (e) {
-      print('Error de conexión obteniendo ventas: $e');
+    AppLogger.error('Error de conexión obteniendo ventas: $e',
+      name: 'ApiService.fetchSales');
       return [];
     }
   }
@@ -70,11 +74,13 @@ class ApiService {
         final ventaJson = jsonData['data'] ?? jsonData['venta'] ?? jsonData;
         return Venta.fromJson(ventaJson);
       } else {
-        print('Error obteniendo detalle de venta: ${response.statusCode}');
+    AppLogger.warn('Error obteniendo detalle de venta: ${response.statusCode}',
+      name: 'ApiService.fetchVentaDetail');
         return null;
       }
     } catch (e) {
-      print('Error obteniendo detalle de venta: $e');
+    AppLogger.error('Error obteniendo detalle de venta: $e',
+      name: 'ApiService.fetchVentaDetail');
       return null;
     }
   }
@@ -99,7 +105,8 @@ class ApiService {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Error auditando venta: $e');
+    AppLogger.error('Error auditando venta: $e',
+      name: 'ApiService.auditarVenta');
       return false;
     }
   }
@@ -124,7 +131,8 @@ class ApiService {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Error reportando venta: $e');
+    AppLogger.error('Error reportando venta: $e',
+      name: 'ApiService.reportarVenta');
       return false;
     }
   }

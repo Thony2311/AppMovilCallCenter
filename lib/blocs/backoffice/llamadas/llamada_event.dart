@@ -1,4 +1,4 @@
-part of 'Llamadas_bloc.dart';
+part of 'llamadas_bloc.dart';
 
 abstract class VentasEvent {}
 
