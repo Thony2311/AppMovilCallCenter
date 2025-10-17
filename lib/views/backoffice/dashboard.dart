@@ -242,49 +242,53 @@ class _DashboardContent extends StatelessWidget {
   }
 
   List<PieChartSectionData> _buildChartSections(Map<String, int> data, int total) {
-    return [
-      _buildChartSectionData(
-        value: data["Llamadas reportadas"]!.toDouble(),
-        percentage: (data["Llamadas reportadas"]! / total) * 100,
-        color: AppColors.reportadas,
-        title: "Reportadas",
-      ),
-      _buildChartSectionData(
-        value: data["Ventas auditadas"]!.toDouble(),
-        percentage: (data["Ventas auditadas"]! / total) * 100,
-        color: AppColors.auditadas,
-        title: "Auditadas",
-      ),
-      _buildChartSectionData(
-        value: data["Ventas por auditar"]!.toDouble(),
-        percentage: (data["Ventas por auditar"]! / total) * 100,
-        color: AppColors.pendientes,
-        title: "Pendientes",
-      ),
-    ];
-  }
+  return [
+    _buildChartSectionData(
+      value: data["Llamadas reportadas"]!.toDouble(),
+      percentage: (data["Llamadas reportadas"]! / total) * 100,
+      color: AppColors.reportadas,
+      title: "Reportadas",
+      badgeOffset: 0.85, 
+    ),
+    _buildChartSectionData(
+      value: data["Ventas auditadas"]!.toDouble(),
+      percentage: (data["Ventas auditadas"]! / total) * 100,
+      color: AppColors.auditadas,
+      title: "Auditadas",
+      badgeOffset: 0.95, 
+    ),
+    _buildChartSectionData(
+      value: data["Ventas por auditar"]!.toDouble(),
+      percentage: (data["Ventas por auditar"]! / total) * 100,
+      color: AppColors.pendientes,
+      title: "Pendientes",
+      badgeOffset: 0.85, 
+    ),
+  ];
+}
 
-  PieChartSectionData _buildChartSectionData({
-    required double value,
-    required double percentage,
-    required Color color,
-    required String title,
-  }) {
-    return PieChartSectionData(
-      color: color,
-      value: value,
-      title: "${percentage.toStringAsFixed(1)}%",
-      radius: 60, // Reduced radius for better fit
-      titleStyle: TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-        fontSize: 12, // Smaller font for web
-        shadows: [Shadow(color: Colors.black.withAlpha(64), blurRadius: 3)],
-      ),
-      badgeWidget: _buildChartBadge(title, color),
-      badgePositionPercentageOffset: 0.15,
-    );
-  }
+PieChartSectionData _buildChartSectionData({
+  required double value,
+  required double percentage,
+  required Color color,
+  required String title,
+  required double badgeOffset, 
+}) {
+  return PieChartSectionData(
+    color: color,
+    value: value,
+    title: "${percentage.toStringAsFixed(1)}%",
+    radius: 60,
+    titleStyle: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+      fontSize: 12,
+      shadows: [Shadow(color: Colors.black.withAlpha(64), blurRadius: 3)],
+    ),
+    badgeWidget: _buildChartBadge(title, color),
+    badgePositionPercentageOffset: badgeOffset, 
+  );
+}
 
   Widget _buildChartBadge(String title, Color color) {
     return Container(
