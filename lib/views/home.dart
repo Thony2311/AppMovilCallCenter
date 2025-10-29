@@ -1,3 +1,6 @@
+import 'package:call_center_application/main.dart';
+import 'package:call_center_application/views/agente/agente_view.dart';
+import 'package:call_center_application/views/coordinador/coordinador_view.dart';
 import 'package:call_center_application/views/login.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
@@ -41,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginView()),
+        MaterialPageRoute(builder: (_) => const CoordinadorMainScreen()),
       );
     });
   }

@@ -196,6 +196,7 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
           ),
         ],
       ),
+      
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: FadeTransition(

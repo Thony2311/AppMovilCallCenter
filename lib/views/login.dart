@@ -1,3 +1,4 @@
+import 'package:call_center_application/views/coordinador/coordinador_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../constants/app_constants.dart';
@@ -104,7 +105,14 @@ class _LoginFormState extends State<_LoginForm> {
                     context,
                     MaterialPageRoute(builder: (_) => const AgenteMainView()),
                   );
-                } else {
+                } 
+                else if(state.user.role == "coordinador") {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CoordinadorMainScreen()),
+                      );
+                      }
+                else {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const MainScreen()),

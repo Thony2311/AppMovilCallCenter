@@ -88,7 +88,7 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
                 // Sección de indicadores de rendimiento
                 _buildSectionTitle(context, "Indicadores de Rendimiento", Icons.trending_up_rounded),
                 const SizedBox(height: 12),
-                _KPIIndicatorCard(
+                const _KPIIndicatorCard(
                   label: "Nivel de Servicio",
                   value: 0.8,
                   target: 0.85,
@@ -97,7 +97,7 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
                   description: "Llamadas atendidas en menos de 20s",
                 ),
                 const SizedBox(height: 12),
-                _KPIIndicatorCard(
+                const _KPIIndicatorCard(
                   label: "Tasa de Abandono",
                   value: 0.4,
                   target: 0.3,
@@ -107,7 +107,7 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
                   isNegative: true,
                 ),
                 const SizedBox(height: 12),
-                _KPIIndicatorCard(
+                const _KPIIndicatorCard(
                   label: "Tiempo Medio de Espera",
                   value: 0.6,
                   target: 0.5,
@@ -158,7 +158,7 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
 class _CallSummaryCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       children: [
         Expanded(
           child: _StatCard(
@@ -168,7 +168,7 @@ class _CallSummaryCards extends StatelessWidget {
             color: AppColors.accent,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: _StatCard(
             title: "Atendidas",
@@ -177,7 +177,7 @@ class _CallSummaryCards extends StatelessWidget {
             color: AppColors.success,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: _StatCard(
             title: "Abandonadas",
@@ -488,13 +488,13 @@ class _CallTrendChart extends StatelessWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.accent,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(
+                    const Text(
                       "En vivo",
                       style: TextStyle(
                         color: AppColors.accent,
