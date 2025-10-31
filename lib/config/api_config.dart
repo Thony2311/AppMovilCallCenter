@@ -60,11 +60,18 @@ class ApiConfig {
   static const String equiposEndpoint = '$baseUrl/campaigns/equipos/';
   static const String equipoDetailEndpoint = '$baseUrl/campaigns/equipos'; // + /{equipo_id}/
   
+  // 📊 Endpoints de KPIs
+  static const String kpiAgentesEndpoint = '$baseUrl/kpis/agentes/';
+  static const String kpiAgenteDetalleEndpoint = '$baseUrl/kpis/agentes'; // + /{documento_id}/detalle/
+  static const String kpiOverviewEndpoint = '$baseUrl/kpis/overview/';
+  static const String kpiCoordinadorDetalleEndpoint = '$baseUrl/kpis/coordinador-detalle/';
+  
   // ⚙️ Headers comunes
   static Map<String, String> headers({String? token}) {
     final Map<String, String> defaultHeaders = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
+      'ngrok-skip-browser-warning': 'true', // 🔧 Evita la página de advertencia de ngrok
     };
     
     if (token != null && token.isNotEmpty) {

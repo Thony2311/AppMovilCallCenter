@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_constants.dart';
+import '../../services/kpis/kpis_service.dart';
+import '../../models/kpis/kpi_agente_metricas_model.dart';
+import '../../utils/app_logger.dart';
 
 /// Vista de KPIs para agentes del call center
 /// Muestra estadísticas y métricas de desempeño de manera visual y amigable
@@ -14,6 +17,11 @@ class AgenteKPIView extends StatefulWidget {
 class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  
+  // Datos del backend
+  KPIAgenteMetricasModel? _kpiData;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -26,6 +34,50 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    _cargarDatos();
+  }
+
+  /// Carga los datos de KPIs desde el backend
+  Future<void> _cargarDatos() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      AppLogger.info('📊 Cargando KPIs del agente...');
+      
+      // Usar fecha de hoy para obtener métricas del día
+      final ahora = DateTime.now();
+      final kpiData = await KPIsService.obtenerMetricasAgenteNuevo(
+        fechaDesde: ahora,
+        fechaHasta: ahora,
+      );
+      
+      AppLogger.info('✅ KPIs cargados exitosamente');
+      AppLogger.info('   - Llamadas atendidas: ${kpiData.values.llamadasAtendidas}');
+      AppLogger.info('   - Ventas realizadas: ${kpiData.values.ventasRealizadas}');
+      AppLogger.info('   - Series datos: ${kpiData.series.llamadasPorHora.length} registros');
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _kpiData = kpiData;
+        _isLoading = false;
+      });
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ Error al cargar KPIs: $e');
+      AppLogger.error('StackTrace: $stackTrace');
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _errorMessage = 'Error al cargar datos: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -42,19 +94,23 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: Text(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        title: const Text(
           "Reportes de Desempeño",
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Actualizar datos',
+            color: Colors.white,
             onPressed: () {
-              // TODO: Implementar actualización de datos
+              _cargarDatos();
               _animationController.reset();
               _animationController.forward();
             },
@@ -64,70 +120,146 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: RefreshIndicator(
-          onRefresh: () async {
-            // TODO: Implementar lógica de actualización
-            await Future.delayed(const Duration(seconds: 1));
-            if (mounted) {
-              _animationController.reset();
-              _animationController.forward();
-            }
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sección de resumen de llamadas
-                _buildSectionTitle(context, "Resumen de Llamadas", Icons.phone_in_talk_rounded),
-                const SizedBox(height: 12),
-                _CallSummaryCards(),
-                
-                const SizedBox(height: 24),
-                
-                // Sección de indicadores de rendimiento
-                _buildSectionTitle(context, "Indicadores de Rendimiento", Icons.trending_up_rounded),
-                const SizedBox(height: 12),
-                const _KPIIndicatorCard(
-                  label: "Nivel de Servicio",
-                  value: 0.8,
-                  target: 0.85,
-                  icon: Icons.support_agent_rounded,
-                  color: AppColors.success,
-                  description: "Llamadas atendidas en menos de 20s",
-                ),
-                const SizedBox(height: 12),
-                const _KPIIndicatorCard(
-                  label: "Tasa de Abandono",
-                  value: 0.4,
-                  target: 0.3,
-                  icon: Icons.phone_missed_rounded,
-                  color: AppColors.error,
-                  description: "Llamadas abandonadas por los clientes",
-                  isNegative: true,
-                ),
-                const SizedBox(height: 12),
-                const _KPIIndicatorCard(
-                  label: "Tiempo Medio de Espera",
-                  value: 0.6,
-                  target: 0.5,
-                  icon: Icons.timer_outlined,
-                  color: AppColors.accent,
-                  description: "Promedio de tiempo en espera (minutos)",
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Sección de gráfica de tendencias
-                _buildSectionTitle(context, "Tendencia de Llamadas", Icons.analytics_rounded),
-                const SizedBox(height: 12),
-                _CallTrendChart(isDark: isDark),
-                
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
+          onRefresh: _cargarDatos,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+                  ? _buildErrorView()
+                  : _kpiData != null
+                      ? _buildContentView(isDark)
+                      : const Center(child: Text('No hay datos disponibles')),
         ),
+      ),
+    );
+  }
+
+  /// Vista de error
+  Widget _buildErrorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              'Error al cargar datos',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'Error desconocido',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _cargarDatos,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Vista de contenido con datos del backend
+  Widget _buildContentView(bool isDark) {
+    final kpi = _kpiData!;
+    
+    // Extraer datos de values (valores actuales)
+    final llamadasAtendidas = kpi.values.llamadasAtendidas;
+    final ventasRealizadas = kpi.values.ventasRealizadas;
+    final tiempoPromedio = kpi.values.tiempoPromedioLlamada;
+    final llamadasPorHoraPromedio = kpi.values.llamadasPorHora;
+    
+    // Extraer metas
+    final metaLlamadas = kpi.meta.llamadasAtendidas;
+    final metaVentas = kpi.meta.ventasRealizadas;
+    final metaTiempo = kpi.meta.tiempoPromedioLlamada;
+    final metaLlamadasHora = kpi.meta.llamadasPorHora;
+    
+    // Series para gráfico
+    final seriesLlamadas = kpi.series.llamadasPorHora;
+    
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Sección de indicadores de rendimiento
+          _buildSectionTitle(context, "Indicadores de Rendimiento", Icons.trending_up_rounded),
+          const SizedBox(height: 12),
+          
+          // Llamadas Atendidas
+          _KPIIndicatorCard(
+            label: "Llamadas Atendidas",
+            value: llamadasAtendidas.toDouble(),
+            target: metaLlamadas.toDouble(),
+            valueText: llamadasAtendidas.toString(),
+            icon: Icons.phone_in_talk,
+            color: AppColors.primary,
+            description: "Total de llamadas atendidas hoy",
+            showAsNumber: true,
+          ),
+          const SizedBox(height: 12),
+          
+          // Llamadas por Hora (desde backend)
+          _KPIIndicatorCard(
+            label: "Llamadas por Hora",
+            value: llamadasPorHoraPromedio,
+            target: metaLlamadasHora.toDouble(),
+            valueText: llamadasPorHoraPromedio.toStringAsFixed(1),
+            icon: Icons.speed,
+            color: Colors.purple,
+            description: "Promedio de llamadas por hora trabajada",
+            showAsNumber: true,
+          ),
+          const SizedBox(height: 12),
+          
+          // Ventas Realizadas
+          _KPIIndicatorCard(
+            label: "Ventas Realizadas",
+            value: ventasRealizadas.toDouble(),
+            target: metaVentas.toDouble(),
+            valueText: ventasRealizadas.toString(),
+            icon: Icons.shopping_bag,
+            color: AppColors.success,
+            description: "Total de ventas concretadas hoy",
+            showAsNumber: true,
+          ),
+          const SizedBox(height: 12),
+          
+          // Tiempo Promedio de Llamada
+          _KPIIndicatorCard(
+            label: "Tiempo Promedio de Llamada",
+            value: tiempoPromedio.toDouble(),
+            target: metaTiempo.toDouble(),
+            valueText: _formatearTiempo(tiempoPromedio),
+            icon: Icons.timer_outlined,
+            color: AppColors.accent,
+            description: "Duración promedio por llamada",
+            showAsNumber: true,
+            isNegative: true, // Menor es mejor
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Sección de gráfica de tendencias
+          _buildSectionTitle(context, "Tendencia de Llamadas", Icons.analytics_rounded),
+          const SizedBox(height: 12),
+          _CallTrendChart(
+            isDark: isDark,
+            llamadasPorHora: seriesLlamadas,
+          ),
+          
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -152,111 +284,12 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
       ],
     );
   }
-}
 
-/// Widget que muestra el resumen de llamadas en tarjetas
-class _CallSummaryCards extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            title: "Realizadas",
-            value: "150",
-            icon: Icons.call_made_rounded,
-            color: AppColors.accent,
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            title: "Atendidas",
-            value: "100",
-            icon: Icons.done_all_rounded,
-            color: AppColors.success,
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            title: "Abandonadas",
-            value: "50",
-            icon: Icons.call_missed_rounded,
-            color: AppColors.error,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Tarjeta individual de estadística
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDark 
-              ? Colors.black.withValues(alpha: 0.3)
-              : Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+  /// Formatea segundos a formato mm:ss
+  String _formatearTiempo(int segundos) {
+    final minutos = segundos ~/ 60;
+    final segs = segundos % 60;
+    return '${minutos}m ${segs}s';
   }
 }
 
@@ -265,27 +298,35 @@ class _KPIIndicatorCard extends StatelessWidget {
   final String label;
   final double value;
   final double target;
+  final String? valueText; // Texto personalizado para mostrar el valor
   final IconData icon;
   final Color color;
   final String description;
   final bool isNegative;
+  final bool showAsNumber; // Si es true, muestra valor como número en vez de porcentaje
 
   const _KPIIndicatorCard({
     required this.label,
     required this.value,
     required this.target,
+    this.valueText,
     required this.icon,
     required this.color,
     required this.description,
     this.isNegative = false,
+    this.showAsNumber = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final percentage = (value * 100).toStringAsFixed(0);
-    final targetPercentage = (target * 100).toStringAsFixed(0);
+    
+    // Calcular progreso normalizado (0.0 a 1.0)
+    final progress = target > 0 ? (value / target).clamp(0.0, 1.0) : 0.0;
     final isOnTarget = isNegative ? value <= target : value >= target;
+    
+    // Texto a mostrar
+    final displayText = valueText ?? (showAsNumber ? value.toStringAsFixed(0) : '${(value * 100).toStringAsFixed(0)}%');
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -355,7 +396,7 @@ class _KPIIndicatorCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      "$percentage%",
+                      displayText,
                       style: TextStyle(
                         color: isOnTarget ? AppColors.success : AppColors.error,
                         fontWeight: FontWeight.bold,
@@ -380,7 +421,7 @@ class _KPIIndicatorCard extends StatelessWidget {
                 ),
               ),
               FractionallySizedBox(
-                widthFactor: value.clamp(0.0, 1.0),
+                widthFactor: progress,
                 child: Container(
                   height: 12,
                   decoration: BoxDecoration(
@@ -398,22 +439,6 @@ class _KPIIndicatorCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Indicador de meta
-              FractionallySizedBox(
-                widthFactor: target.clamp(0.0, 1.0),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    width: 3,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: color, width: 2),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -421,14 +446,14 @@ class _KPIIndicatorCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Actual: $percentage%",
+                "Actual: $displayText",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
-                "Meta: $targetPercentage%",
+                "Meta: ${target.toStringAsFixed(0)}",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                 ),
@@ -444,11 +469,77 @@ class _KPIIndicatorCard extends StatelessWidget {
 /// Gráfica de tendencia de llamadas
 class _CallTrendChart extends StatelessWidget {
   final bool isDark;
+  final List<LlamadaHoraSerie>? llamadasPorHora;
 
-  const _CallTrendChart({required this.isDark});
+  const _CallTrendChart({
+    required this.isDark,
+    this.llamadasPorHora,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Si no hay datos, mostrar mensaje
+    if (llamadasPorHora == null || llamadasPorHora!.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDark 
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.analytics_outlined,
+                size: 48,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No hay datos de tendencia disponibles',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Preparar datos para el gráfico - tomar los últimos 6 valores
+    final spots = <FlSpot>[];
+    final labels = <String>[];
+    double maxY = 5; // Valor mínimo inicial para el eje Y
+    
+    // Obtener los últimos 6 elementos
+    final totalItems = llamadasPorHora!.length;
+    final startIndex = totalItems > 6 ? totalItems - 6 : 0;
+    final itemsToShow = llamadasPorHora!.sublist(startIndex);
+    
+    for (int i = 0; i < itemsToShow.length; i++) {
+      final item = itemsToShow[i];
+      
+      final horaStr = item.hora; // "09:00"
+      final valor = item.valor.toDouble();
+      
+      spots.add(FlSpot(i.toDouble(), valor));
+      labels.add(horaStr); // Ya viene en formato "HH:00"
+      
+      if (valor > maxY) maxY = valor;
+    }
+    
+    // Ajustar maxY para que tenga un margen
+    maxY = (maxY * 1.2).ceilToDouble();
+    if (maxY < 5) maxY = 5;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -471,7 +562,7 @@ class _CallTrendChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Últimas 5 horas",
+                "Llamadas por hora",
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -515,7 +606,7 @@ class _CallTrendChart extends StatelessWidget {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 1,
+                  horizontalInterval: maxY > 10 ? 5 : 2,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
                       color: isDark 
@@ -540,12 +631,12 @@ class _CallTrendChart extends StatelessWidget {
                       reservedSize: 30,
                       interval: 1,
                       getTitlesWidget: (value, meta) {
-                        const hours = ['9:00', '10:00', '11:00', '12:00', '13:00'];
-                        if (value.toInt() >= 0 && value.toInt() < hours.length) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < labels.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              hours[value.toInt()],
+                              labels[index],
                               style: TextStyle(
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                                 fontSize: 10,
@@ -560,7 +651,7 @@ class _CallTrendChart extends StatelessWidget {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 2,
+                      interval: maxY > 10 ? 5 : 2,
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
                         return Text(
@@ -576,18 +667,12 @@ class _CallTrendChart extends StatelessWidget {
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
-                maxX: 4,
+                maxX: (spots.length - 1).toDouble(),
                 minY: 0,
-                maxY: 8,
+                maxY: maxY,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 3),
-                      FlSpot(1, 2),
-                      FlSpot(2, 5),
-                      FlSpot(3, 4),
-                      FlSpot(4, 6),
-                    ],
+                    spots: spots,
                     isCurved: true,
                     gradient: LinearGradient(
                       colors: [

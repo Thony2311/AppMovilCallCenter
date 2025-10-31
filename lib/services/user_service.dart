@@ -209,21 +209,46 @@ class UserService {
       final headers = _buildHeaders();
       
       AppLogger.info('👤 Obteniendo perfil actual...');
+      AppLogger.info('📍 URL: ${ApiConfig.userMeEndpoint}');
       
       final response = await http.get(
         Uri.parse(ApiConfig.userMeEndpoint),
         headers: headers,
       ).timeout(ApiConfig.connectionTimeout);
 
+      AppLogger.info('📊 Status Code: ${response.statusCode}');
+      AppLogger.info('📄 Content-Type: ${response.headers['content-type']}');
+      
       if (response.statusCode == 200) {
+        // Verificar si la respuesta es JSON
+        final contentType = response.headers['content-type'] ?? '';
+        if (!contentType.contains('application/json')) {
+          AppLogger.error('❌ Respuesta NO es JSON. Content-Type: $contentType');
+          AppLogger.error('🔍 Primeros 200 caracteres de la respuesta: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
+          throw Exception('El servidor devolvió HTML en lugar de JSON. Verifica la URL del endpoint.');
+        }
+        
         final data = json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
         _logSuccess('✅ Perfil obtenido: ${data['full_name']}');
         return UsuarioModel.fromJson(data);
       } else {
-        final error = json.decode(utf8.decode(response.bodyBytes));
-        AppLogger.error('❌ Error al obtener perfil: ${error['detail'] ?? error}');
-        throw Exception(error['detail'] ?? 'Error al obtener perfil');
+        // Intentar decodificar el error
+        try {
+          final error = json.decode(utf8.decode(response.bodyBytes));
+          AppLogger.error('❌ Error al obtener perfil: ${error['detail'] ?? error}');
+          throw Exception(error['detail'] ?? 'Error al obtener perfil');
+        } catch (e) {
+          // Si no se puede decodificar, es HTML
+          AppLogger.error('❌ Respuesta de error NO es JSON');
+          AppLogger.error('🔍 Respuesta: ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+          throw Exception('Error ${response.statusCode}: El servidor devolvió HTML. Endpoint incorrecto o no disponible.');
+        }
       }
+    } on FormatException catch (e) {
+      AppLogger.error('❌ Error de formato JSON: $e');
+      AppLogger.error('💡 El servidor está devolviendo HTML en lugar de JSON');
+      AppLogger.error('🔧 Verifica: 1) URL correcta, 2) Endpoint existe, 3) Backend funcionando');
+      throw Exception('Error de formato: El servidor devolvió HTML en lugar de JSON. Verifica la configuración del backend.');
     } catch (e) {
       AppLogger.error('❌ Excepción al obtener perfil: $e');
       rethrow;
