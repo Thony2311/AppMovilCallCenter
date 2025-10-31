@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'constants/app_constants.dart';
 import 'views/backoffice/dashboard.dart';
 import 'views/backoffice/ventas.dart';
-import 'views/backoffice/opciones.dart';
+import 'views/opciones.dart';
 import 'views/home.dart';
 import 'views/recuperar_contrasena.dart';
 import 'config/theme_manager.dart'; 
@@ -24,7 +24,7 @@ class CallCenterApp extends StatelessWidget {
     final themeManager = Provider.of<ThemeManager>(context);
     
     return MaterialApp(
-      title: 'BackOffice Call Center',
+      title: 'Call Center',
       debugShowCheckedModeBanner: false,
       theme: AppThemes.lightTheme,
       darkTheme: AppThemes.darkTheme,

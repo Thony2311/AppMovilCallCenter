@@ -100,19 +100,21 @@ class _LoginFormState extends State<_LoginForm> {
           child: BlocConsumer<LoginBloc, LoginState>(
             listener: (context, state) {
               if (state is LoginSuccess) {
-                if (state.user.role == "agente") {
+                // Usar getters del modelo para verificar roles (case-insensitive)
+                if (state.user.isAgent) {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const AgenteMainView()),
                   );
                 } 
-                else if(state.user.role == "coordinador") {
+                else if (state.user.isCoordinator) {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const CoordinadorMainScreen()),
                       );
                       }
                 else {
+                  // Para backoffice, admin, jefe de campaña, etc.
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -184,21 +186,26 @@ class _LoginFormState extends State<_LoginForm> {
                             ),
                             const SizedBox(height: 32),
 
-                            // Username Field
+                            // Email Field
                             TextFormField(
                               controller: _userController,
+                              keyboardType: TextInputType.emailAddress,
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'El usuario es requerido';
+                                  return 'El email es requerido';
+                                }
+                                // Validación básica de email
+                                if (!value.contains('@')) {
+                                  return 'Ingresa un email válido';
                                 }
                                 return null;
                               },
                               decoration: _buildInputDecoration(
-                                label: "Usuario",
-                                icon: Icons.person_2_outlined,
+                                label: "Email",
+                                icon: Icons.email_outlined,
                               ),
                             ),
                             const SizedBox(height: 20),

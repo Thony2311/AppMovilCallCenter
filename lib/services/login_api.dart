@@ -1,25 +1,30 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/usuario_model.dart';
+import '../models/login_response_model.dart';
+import '../models/auth_tokens_model.dart';
 import '../config/api_config.dart';
 import '../utils/app_logger.dart';
 
+/// Servicio para manejar la autenticación JWT con el backend
 class LoginApi {
-  /// Realiza el login contra la API en EC2
-  /// Retorna el UsuarioModel si es exitoso, null si falla
-  Future<UsuarioModel?> login(String username, String password) async {
+  /// Realiza el login contra el backend
+  /// Retorna LoginResponseModel (user + tokens) si es exitoso
+  /// Lanza excepción si falla
+  Future<LoginResponseModel> login(String email, String password) async {
     try {
       // Validación básica
-      if (username.isEmpty || password.isEmpty) {
-        return null;
+      if (email.isEmpty || password.isEmpty) {
+        throw Exception('Email y contraseña son requeridos');
       }
 
-      // Preparar el body de la petición
+      // Preparar el body de la petición (email en vez de username)
       final body = jsonEncode({
-        'username': username,
+        'email': email,
         'password': password,
       });
+
+      AppLogger.info('Intentando login con email: $email', name: 'LoginApi.login');
 
       // Hacer la petición POST a la API
       final response = await http
@@ -30,81 +35,93 @@ class LoginApi {
           )
           .timeout(ApiConfig.connectionTimeout);
 
+      AppLogger.info('Respuesta login: ${response.statusCode}', name: 'LoginApi.login');
+
       // Verificar el código de respuesta
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Parsear la respuesta JSON
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         
-        // Algunos backends envuelven la data en un objeto "data" o "user"
-        final userData = jsonData['data'] ?? jsonData['user'] ?? jsonData;
-
-        if (userData is Map<String, dynamic>) {
-          return UsuarioModel.fromJson(userData);
+        // La respuesta debe tener la estructura {user: {...}, tokens: {...}}
+        if (!jsonData.containsKey('user') || !jsonData.containsKey('tokens')) {
+          AppLogger.error('Respuesta sin user o tokens: $jsonData', name: 'LoginApi.login');
+          throw Exception('Respuesta del servidor en formato incorrecto');
         }
 
-        // A veces viene como String JSON dentro del campo
-        if (userData is String) {
-          try {
-            final parsed = jsonDecode(userData);
-            if (parsed is Map<String, dynamic>) return UsuarioModel.fromJson(parsed);
-          } catch (e) {
-            AppLogger.warn('userData string no es JSON válido: $e', name: 'LoginApi.login');
-          }
-        }
-
-        AppLogger.warn('Formato inesperado en userData: ${userData.runtimeType}', name: 'LoginApi.login');
-        return null;
+        return LoginResponseModel.fromJson(jsonData);
+      } else if (response.statusCode == 400) {
+        // Credenciales incorrectas o usuario desactivado
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final errorMsg = jsonData['non_field_errors']?.first ?? 
+                        jsonData['detail'] ?? 
+                        'Credenciales incorrectas';
+        throw Exception(errorMsg);
       } else if (response.statusCode == 401) {
-        // Credenciales incorrectas
-        return null;
+        throw Exception('Credenciales incorrectas');
       } else {
         // Otro error del servidor
-        AppLogger.warn('Error en login: ${response.statusCode} - ${response.body}',
+        AppLogger.error('Error en login: ${response.statusCode} - ${response.body}',
             name: 'LoginApi.login');
-        return null;
+        throw Exception('Error del servidor: ${response.statusCode}');
       }
     } on TimeoutException catch (e) {
-      AppLogger.warn('Timeout en login: $e', name: 'LoginApi.login');
-      return null;
+      AppLogger.error('Timeout en login: $e', name: 'LoginApi.login');
+      throw Exception('Tiempo de espera agotado. Verifica tu conexión.');
     } catch (e) {
       AppLogger.error('Error de conexión en login: $e', name: 'LoginApi.login');
-      // En desarrollo, puedes descomentar esto para ver el error completo
-      // rethrow;
-      return null;
+      rethrow;
     }
   }
 
-  /// Valida si un token sigue siendo válido
-  Future<bool> validateToken(String token) async {
+  /// Refresca el access token usando el refresh token
+  /// Retorna los nuevos tokens
+  Future<AuthTokensModel> refreshToken(String refreshToken) async {
     try {
+      final body = jsonEncode({'refresh': refreshToken});
+
       final response = await http
-          .get(
-            Uri.parse(ApiConfig.validateTokenEndpoint),
-            headers: ApiConfig.headers(token: token),
+          .post(
+            Uri.parse(ApiConfig.refreshTokenEndpoint),
+            headers: ApiConfig.headers(),
+            body: body,
           )
           .timeout(ApiConfig.connectionTimeout);
 
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        return AuthTokensModel.fromJson(jsonData);
+      } else if (response.statusCode == 401) {
+        throw Exception('Refresh token expirado. Por favor, inicia sesión nuevamente.');
+      } else {
+        throw Exception('Error al refrescar token: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('Tiempo de espera agotado al refrescar token');
     } catch (e) {
-      AppLogger.error('Error validando token: $e', name: 'LoginApi.validateToken');
-      return false;
+      AppLogger.error('Error en refreshToken: $e', name: 'LoginApi.refreshToken');
+      rethrow;
     }
   }
 
-  /// Cierra la sesión del usuario
-  Future<bool> logout(String token) async {
+  /// Cierra la sesión del usuario (invalida el refresh token)
+  Future<bool> logout(String refreshToken, String accessToken) async {
     try {
+      final body = jsonEncode({'refresh': refreshToken});
+
       final response = await http
           .post(
             Uri.parse(ApiConfig.logoutEndpoint),
-            headers: ApiConfig.headers(token: token),
+            headers: ApiConfig.headers(token: accessToken),
+            body: body,
           )
           .timeout(ApiConfig.connectionTimeout);
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
       AppLogger.error('Error en logout: $e', name: 'LoginApi.logout');
-      return false;
+      // Aunque falle el logout en el servidor, retornamos true
+      // para que se limpie la sesión local
+      return true;
     }
   }
 }

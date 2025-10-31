@@ -11,7 +11,7 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final token = AuthManager().token;
+    final token = AuthManager().accessToken;
 
     return BlocProvider(
       create: (_) =>

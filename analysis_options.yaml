@@ -7,7 +7,7 @@
 # Incluye el conjunto de reglas recomendadas de Flutter
 include: package:flutter_lints/flutter.yaml
 
-# Configuración del analizador
+# Configuración del analizador ..
 analyzer:
   # Excluir archivos generados automáticamente
   exclude:

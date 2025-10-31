@@ -1,5 +1,8 @@
-/// Clase singleton para gestionar la sesión del usuario
-/// Almacena el token y datos del usuario después del login
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/usuario_model.dart';
+
+/// Clase singleton para gestionar la sesión del usuario con JWT
+/// Almacena tokens (access y refresh) y datos del usuario después del login
 class AuthManager {
   static final AuthManager _instance = AuthManager._internal();
   
@@ -9,69 +12,107 @@ class AuthManager {
   
   AuthManager._internal();
 
-  String? _token;
-  String? _username;
-  String? _nombre;
-  String? _email;
-  String? _role;
-  int? _userId;
+  // Almacenamiento seguro para el refresh token
+  final _secureStorage = const FlutterSecureStorage();
+  
+  // Claves para el almacenamiento seguro
+  static const String _refreshTokenKey = 'refresh_token';
+  
+  // Access token (en memoria, válido 8 horas)
+  String? _accessToken;
+  
+  // Datos del usuario
+  UsuarioModel? _user;
 
-  /// Guardar datos de sesión después del login
-  void setSession({
-    required String token,
-    String? username,
-    String? nombre,
-    String? email,
-    String? role,
-    int? userId,
-  }) {
-    _token = token;
-    _username = username;
-    _nombre = nombre;
-    _email = email;
-    _role = role;
-    _userId = userId;
+  /// Guardar datos de sesión después del login exitoso
+  Future<void> setSession({
+    required String accessToken,
+    required String refreshToken,
+    required UsuarioModel user,
+  }) async {
+    _accessToken = accessToken;
+    _user = user;
+    
+    // Guardar refresh token de forma segura
+    await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
-  /// Obtener el token actual
-  String? get token => _token;
+  /// Obtener el access token actual (para hacer requests)
+  String? get accessToken => _accessToken;
 
-  /// Obtener el username actual
-  String? get username => _username;
+  /// Obtener el usuario actual
+  UsuarioModel? get user => _user;
 
-  /// Obtener el nombre completo del usuario
-  String? get nombre => _nombre;
+  /// Obtener el refresh token de forma segura
+  Future<String?> getRefreshToken() async {
+    return await _secureStorage.read(key: _refreshTokenKey);
+  }
 
-  /// Obtener el email del usuario
-  String? get email => _email;
+  /// Actualizar solo el access token (después de refresh)
+  void updateAccessToken(String newAccessToken) {
+    _accessToken = newAccessToken;
+  }
 
-  /// Obtener el rol actual
-  String? get role => _role;
-
-  /// Obtener el ID del usuario
-  int? get userId => _userId;
+  /// Actualizar ambos tokens (después de refresh que retorna ambos)
+  Future<void> updateTokens({
+    required String accessToken,
+    String? refreshToken,
+  }) async {
+    _accessToken = accessToken;
+    if (refreshToken != null) {
+      await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+    }
+  }
 
   /// Verificar si hay una sesión activa
-  bool get isAuthenticated => _token != null && _token!.isNotEmpty;
+  bool get isAuthenticated => _accessToken != null && _accessToken!.isNotEmpty && _user != null;
+
+  /// Obtener datos del usuario (retrocompatibilidad)
+  String? get email => _user?.email;
+  String? get fullName => _user?.fullName;
+  String? get role => _user?.role;
+  String? get documentoId => _user?.documentoId;
+  
+  @Deprecated('Usar email en su lugar')
+  String? get username => _user?.email;
+  
+  @Deprecated('Usar fullName en su lugar')
+  String? get nombre => _user?.fullName;
 
   /// Limpiar la sesión (logout)
-  void clearSession() {
-    _token = null;
-    _username = null;
-    _nombre = null;
-    _email = null;
-    _role = null;
-    _userId = null;
+  Future<void> clearSession() async {
+    _accessToken = null;
+    _user = null;
+    await _secureStorage.delete(key: _refreshTokenKey);
   }
 
   /// Obtener todos los datos de sesión
-  Map<String, dynamic> getSessionData() {
+  Future<Map<String, dynamic>> getSessionData() async {
     return {
-      'token': _token,
-      'username': _username,
-      'role': _role,
-      'userId': _userId,
+      'accessToken': _accessToken,
+      'refreshToken': await getRefreshToken(),
+      'user': _user?.toJson(),
       'isAuthenticated': isAuthenticated,
     };
   }
+
+  /// Verificar si el usuario tiene un rol específico
+  bool hasRole(String role) {
+    return _user?.role.toUpperCase() == role.toUpperCase();
+  }
+
+  /// Verificar si el usuario es agente
+  bool get isAgent => _user?.isAgent ?? false;
+
+  /// Verificar si el usuario es coordinador
+  bool get isCoordinator => _user?.isCoordinator ?? false;
+
+  /// Verificar si el usuario es jefe de campaña
+  bool get isJefeCampana => _user?.isJefeCampana ?? false;
+
+  /// Verificar si el usuario es backoffice
+  bool get isBackoffice => _user?.isBackoffice ?? false;
+
+  /// Verificar si el usuario es admin
+  bool get isAdmin => _user?.isAdmin ?? false;
 }

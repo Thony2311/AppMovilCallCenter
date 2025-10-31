@@ -19,7 +19,7 @@ class _VentasViewState extends State<VentasView> {
 
   @override
   Widget build(BuildContext context) {
-    final token = AuthManager().token;
+    final token = AuthManager().accessToken;
     
     return BlocProvider(
       create: (_) => VentasBloc(ApiService(token: token))..add(CargarVentas()),

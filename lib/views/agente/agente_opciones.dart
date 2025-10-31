@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../backoffice/opciones.dart';
+import '../opciones.dart';
 
 class AgenteOpcionesView extends StatelessWidget {
   const AgenteOpcionesView({super.key});
