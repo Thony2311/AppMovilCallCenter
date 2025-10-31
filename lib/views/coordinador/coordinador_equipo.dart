@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../constants/app_constants.dart';
 import 'detalle_agente.dart';
 
 class CoordinadorEquipoView extends StatefulWidget {
@@ -9,178 +8,584 @@ class CoordinadorEquipoView extends StatefulWidget {
   State<CoordinadorEquipoView> createState() => _CoordinadorEquipoViewState();
 }
 
-class _CoordinadorEquipoViewState extends State<CoordinadorEquipoView> {
-  final List<Map<String, String>> _agentes = [
-    {"nombre": "Carlos Gómez", "codigo": "AG001", "estado": "Activo"},
-    {"nombre": "Laura Martínez", "codigo": "AG002", "estado": "Inactivo"},
-    {"nombre": "Andrés Torres", "codigo": "AG003", "estado": "Activo"},
-    {"nombre": "María Pérez", "codigo": "AG004", "estado": "Activo"},
-    {"nombre": "Juan Rodríguez", "codigo": "AG005", "estado": "Activo"},
-    {"nombre": "Ana López", "codigo": "AG006", "estado": "Inactivo"},
-    {"nombre": "Pedro Sánchez", "codigo": "AG007", "estado": "Activo"},
-    {"nombre": "Sofia Castro", "codigo": "AG008", "estado": "Activo"},
+class _CoordinadorEquipoViewState extends State<CoordinadorEquipoView> 
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  
+  // Datos mock mientras se acomoda el endpoint
+  final List<Map<String, dynamic>> _agentes = [
+    {
+      "nombre": "Carlos Gómez",
+      "codigo": "AG001",
+      "estado": "Disponible",
+      "llamadas": 45,
+      "ventas": 12,
+      "tiempoPromedio": "5:30",
+      "email": "carlos.gomez@empresa.com"
+    },
+    {
+      "nombre": "Laura Martínez",
+      "codigo": "AG002",
+      "estado": "En Llamada",
+      "llamadas": 38,
+      "ventas": 9,
+      "tiempoPromedio": "6:15",
+      "email": "laura.martinez@empresa.com"
+    },
+    {
+      "nombre": "Andrés Torres",
+      "codigo": "AG003",
+      "estado": "Disponible",
+      "llamadas": 52,
+      "ventas": 15,
+      "tiempoPromedio": "4:45",
+      "email": "andres.torres@empresa.com"
+    },
+    {
+      "nombre": "María Pérez",
+      "codigo": "AG004",
+      "estado": "Postcall",
+      "llamadas": 41,
+      "ventas": 11,
+      "tiempoPromedio": "5:50",
+      "email": "maria.perez@empresa.com"
+    },
+    {
+      "nombre": "Juan Rodríguez",
+      "codigo": "AG005",
+      "estado": "Disponible",
+      "llamadas": 48,
+      "ventas": 13,
+      "tiempoPromedio": "5:20",
+      "email": "juan.rodriguez@empresa.com"
+    },
+    {
+      "nombre": "Ana López",
+      "codigo": "AG006",
+      "estado": "Desconectado",
+      "llamadas": 0,
+      "ventas": 0,
+      "tiempoPromedio": "0:00",
+      "email": "ana.lopez@empresa.com"
+    },
+    {
+      "nombre": "Pedro Sánchez",
+      "codigo": "AG007",
+      "estado": "En Llamada",
+      "llamadas": 43,
+      "ventas": 10,
+      "tiempoPromedio": "6:00",
+      "email": "pedro.sanchez@empresa.com"
+    },
+    {
+      "nombre": "Sofia Castro",
+      "codigo": "AG008",
+      "estado": "Disponible",
+      "llamadas": 50,
+      "ventas": 14,
+      "tiempoPromedio": "5:10",
+      "email": "sofia.castro@empresa.com"
+    },
   ];
 
   String _busqueda = "";
+  String _filtroEstado = "Todos";
+  bool _isLoading = false;
   int _currentPage = 0;
-  final int _itemsPerPage = 5;
+  final int _itemsPerPage = 4;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  /// Obtener color según estado del agente
+  Color _getColorEstado(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'DISPONIBLE':
+        return Colors.green;
+      case 'EN LLAMADA':
+        return Colors.blue;
+      case 'POSTCALL':
+        return Colors.orange;
+      case 'DESCONECTADO':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// Obtener icono según estado del agente
+  IconData _getIconoEstado(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'DISPONIBLE':
+        return Icons.check_circle;
+      case 'EN LLAMADA':
+        return Icons.phone_in_talk;
+      case 'POSTCALL':
+        return Icons.timer;
+      case 'DESCONECTADO':
+        return Icons.cancel;
+      default:
+        return Icons.help;
+    }
+  }
+
+  /// Obtener iniciales del agente
+  String _getInitials(String nombre) {
+    final parts = nombre.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return nombre[0].toUpperCase();
+  }
+
+  /// Simular carga de datos
+  Future<void> _cargarDatos() async {
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 800));
+    setState(() => _isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final agentesFiltrados = _agentes
-        .where((agente) =>
-            agente["nombre"]!.toLowerCase().contains(_busqueda.toLowerCase()) ||
-            agente["codigo"]!.toLowerCase().contains(_busqueda.toLowerCase()))
-        .toList();
+    // Obtener dimensiones de pantalla
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
 
+    // Filtrar agentes por búsqueda y estado
+    final agentesFiltrados = _agentes.where((agente) {
+      final nombre = agente["nombre"] as String;
+      final codigo = agente["codigo"] as String;
+      final estado = agente["estado"] as String;
+      
+      final matchBusqueda = nombre.toLowerCase().contains(_busqueda.toLowerCase()) ||
+          codigo.toLowerCase().contains(_busqueda.toLowerCase());
+      
+      final matchEstado = _filtroEstado == "Todos" || estado == _filtroEstado;
+      
+      return matchBusqueda && matchEstado;
+    }).toList();
+
+    // Paginación
     final totalPages = (agentesFiltrados.length / _itemsPerPage).ceil();
     final startIndex = _currentPage * _itemsPerPage;
-    final endIndex = startIndex + _itemsPerPage;
+    final endIndex = (startIndex + _itemsPerPage > agentesFiltrados.length)
+        ? agentesFiltrados.length
+        : startIndex + _itemsPerPage;
     final agentesPaginados = agentesFiltrados.sublist(
       startIndex,
-      endIndex > agentesFiltrados.length ? agentesFiltrados.length : endIndex,
+      endIndex,
     );
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Text(
-              "Equipo de Agentes",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+    // Widget de carga
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Contenido principal
+    return RefreshIndicator(
+      onRefresh: _cargarDatos,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Barra de búsqueda
+                      _buildSearchBar(context, isSmallScreen),
+                      const SizedBox(height: 16),
+
+                      // Filtros de estado
+                      _buildStatusFilters(context, isSmallScreen),
+                      const SizedBox(height: 20),
+
+                      // Título de la lista y botón limpiar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Agentes (${agentesFiltrados.length})',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (agentesFiltrados.isEmpty && (_busqueda.isNotEmpty || _filtroEstado != "Todos"))
+                            TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _busqueda = "";
+                                  _filtroEstado = "Todos";
+                                  _currentPage = 0;
+                                });
+                              },
+                              icon: const Icon(Icons.clear, size: 18),
+                              label: const Text('Limpiar'),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Lista de agentes paginados
+                      if (agentesFiltrados.isEmpty)
+                        _buildEmptyState(context, isSmallScreen)
+                      else
+                        ...agentesPaginados.map((agente) {
+                          return _buildAgenteCard(context, agente, isSmallScreen);
+                        }),
+
+                      // Controles de paginación
+                      if (totalPages > 1) ...[
+                        const SizedBox(height: 20),
+                        _buildPaginationControls(context, totalPages, isSmallScreen),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-          
-          // Search Bar
-          TextField(
-            decoration: InputDecoration(
-              hintText: "Buscar agente...",
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: Theme.of(context).cardColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                borderSide: BorderSide.none,
+          );
+  }
+
+  /// Widget de controles de paginación
+  Widget _buildPaginationControls(BuildContext context, int totalPages, bool isSmallScreen) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16,
+          vertical: isSmallScreen ? 8 : 12,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Botón anterior
+            ElevatedButton.icon(
+              onPressed: _currentPage > 0
+                  ? () => setState(() => _currentPage--)
+                  : null,
+              icon: const Icon(Icons.arrow_back_ios, size: 16),
+              label: Text(isSmallScreen ? '' : 'Anterior'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey[300],
+                disabledForegroundColor: Colors.grey[500],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                  vertical: 10,
+                ),
               ),
             ),
-            onChanged: (value) {
-              setState(() {
-                _busqueda = value;
-                _currentPage = 0; // Reset to first page when searching
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          
-          // Agents List
-          Expanded(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              children: agentesPaginados.map((agente) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => DetalleAgenteView(agente: agente)),
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(26),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+
+            // Indicador de página
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${_currentPage + 1} / $totalPages',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 14 : 15,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+
+            // Botón siguiente
+            ElevatedButton.icon(
+              onPressed: _currentPage < totalPages - 1
+                  ? () => setState(() => _currentPage++)
+                  : null,
+              label: Text(isSmallScreen ? '' : 'Siguiente'),
+              icon: const Icon(Icons.arrow_forward_ios, size: 16),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey[300],
+                disabledForegroundColor: Colors.grey[500],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                  vertical: 10,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Widget de barra de búsqueda
+  Widget _buildSearchBar(BuildContext context, bool isSmallScreen) {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          _busqueda = value;
+          _currentPage = 0; // Resetear a la primera página al buscar
+        });
+      },
+      decoration: InputDecoration(
+        hintText: "Buscar por nombre o código...",
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: _busqueda.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () => setState(() => _busqueda = ""),
+              )
+            : null,
+        filled: true,
+        fillColor: Theme.of(context).cardColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16,
+          vertical: isSmallScreen ? 12 : 16,
+        ),
+      ),
+    );
+  }
+
+  /// Widget de filtros de estado
+  Widget _buildStatusFilters(BuildContext context, bool isSmallScreen) {
+    final estados = ["Todos", "Disponible", "En Llamada", "Postcall", "Desconectado"];
+
+    return SizedBox(
+      height: isSmallScreen ? 36 : 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: estados.length,
+        itemBuilder: (context, index) {
+          final estado = estados[index];
+          final isSelected = _filtroEstado == estado;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Text(
+                estado,
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 12 : 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              onSelected: (selected) {
+                setState(() {
+                  _filtroEstado = estado;
+                  _currentPage = 0; // Resetear a la primera página al cambiar filtro
+                });
+              },
+              selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+              checkmarkColor: Theme.of(context).primaryColor,
+              side: BorderSide(
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey.withValues(alpha: 0.3),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Widget de card de agente
+  Widget _buildAgenteCard(BuildContext context, Map<String, dynamic> agente, bool isSmallScreen) {
+    final nombre = agente["nombre"] as String;
+    final codigo = agente["codigo"] as String;
+    final estado = agente["estado"] as String;
+    final llamadas = agente["llamadas"] as int;
+    final ventas = agente["ventas"] as int;
+    
+    final color = _getColorEstado(estado);
+    final icono = _getIconoEstado(estado);
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetalleAgenteView(agente: agente),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+          child: Row(
+            children: [
+              // Avatar
+              Hero(
+                tag: 'avatar_$codigo',
+                child: CircleAvatar(
+                  radius: isSmallScreen ? 24 : 28,
+                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                  child: Text(
+                    _getInitials(nombre),
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: isSmallScreen ? 10 : 12),
+
+              // Información del agente
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nombre,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      codigo,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.phone, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$llamadas',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.shopping_bag, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$ventas',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).primaryColor.withAlpha(51),
-                        child: Icon(Icons.person, color: Theme.of(context).primaryColor),
-                      ),
-                      title: Text(agente["nombre"]!, style: Theme.of(context).textTheme.bodyLarge),
-                      subtitle: Text("Código: ${agente["codigo"]}"),
-                      trailing: Chip(
-                        label: Text(
-                          agente["estado"]!,
-                          style: TextStyle(
-                            color: agente["estado"] == "Activo" ? Colors.green[700] : Colors.red[700],
-                          ),
-                        ),
-                        backgroundColor: agente["estado"] == "Activo" 
-                            ? Colors.green[100] 
-                            : Colors.red[100],
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          
-          // Pagination
-          if (agentesFiltrados.length > _itemsPerPage) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                  ],
+                ),
+              ),
+
+              // Estado
+              Column(
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: _currentPage > 0
-                        ? () => setState(() => _currentPage--)
-                        : null,
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 16),
-                    label: const Text(""),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      disabledBackgroundColor: Colors.grey.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 3,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
                     ),
+                    child: Icon(icono, color: color, size: 20),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(height: 4),
                   Text(
-                    "Página ${_currentPage + 1} de $totalPages",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(width: 20),
-                  ElevatedButton.icon(
-                    onPressed: _currentPage < totalPages - 1
-                        ? () => setState(() => _currentPage++)
-                        : null,
-                    icon: const Icon(Icons.arrow_forward_ios, size: 16),
-                    label: const Text(""),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      disabledBackgroundColor: Colors.grey.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 3,
+                    estado,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: color,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Widget de estado vacío
+  Widget _buildEmptyState(BuildContext context, bool isSmallScreen) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.all(isSmallScreen ? 32 : 48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: isSmallScreen ? 64 : 80,
+              color: Colors.grey[400],
+            ),
+            SizedBox(height: isSmallScreen ? 12 : 16),
+            Text(
+              'No se encontraron agentes',
+              style: TextStyle(
+                fontSize: isSmallScreen ? 16 : 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: isSmallScreen ? 6 : 8),
+            Text(
+              'Intenta con otros filtros o términos de búsqueda',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 13 : 14,
+                color: Colors.grey[500],
+              ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

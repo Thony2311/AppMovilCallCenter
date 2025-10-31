@@ -514,7 +514,7 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
             Expanded(
               child: _buildModernMetricCard(
                 context,
-                'Llamadas Atendidas',
+                'Llamadas',
                 _totalLlamadas.toString(),
                 Icons.phone_in_talk,
                 Colors.blue,

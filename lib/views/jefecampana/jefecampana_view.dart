@@ -23,6 +23,13 @@ class _JefeCampanaViewState extends State<JefeCampanaView> {
     JefecampanaOpciones(),
   ];
 
+  final List<String> _titles = [
+    "Dashboard",
+    "Agentes",
+    "Reportes",
+    "Opciones",
+  ];
+
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
   }
@@ -30,6 +37,12 @@ class _JefeCampanaViewState extends State<JefeCampanaView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(_titles[_selectedIndex]),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: AnimatedSwitcher(
         duration: AppConfig.animationDuration,
         child: _views[_selectedIndex],

@@ -536,19 +536,12 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
 
   Widget _buildLogoutButton(BuildContext context) {
     return Container(
-      width: double.infinity,
-      height: 56,
       decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            Colors.red.shade400,
-            Colors.red.shade600,
-          ],
-        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withAlpha(77),
+            color: Colors.black.withAlpha(13),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -559,20 +552,46 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => _showLogoutDialog(context),
-          child: const Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.logout, color: Colors.white),
-                SizedBox(width: 12),
-                Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withAlpha(26),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: const Icon(
+                    Icons.logout,
+                    color: Colors.red,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cerrar Sesión',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      Text(
+                        'Salir de la aplicación',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
                 ),
               ],
             ),

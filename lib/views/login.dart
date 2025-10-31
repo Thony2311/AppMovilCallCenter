@@ -1,4 +1,5 @@
 import 'package:call_center_application/views/coordinador/coordinador_view.dart';
+import 'package:call_center_application/views/jefecampana/jefecampana_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../constants/app_constants.dart';
@@ -111,10 +112,16 @@ class _LoginFormState extends State<_LoginForm> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const CoordinadorMainScreen()),
-                      );
-                      }
+                  );
+                }
+                else if (state.user.isJefeCampana) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const JefeCampanaView()),
+                  );
+                }
                 else {
-                  // Para backoffice, admin, jefe de campaña, etc.
+                  // Para backoffice, admin, jefe de centro, etc.
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const MainScreen()),

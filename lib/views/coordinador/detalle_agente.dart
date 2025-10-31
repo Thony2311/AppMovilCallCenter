@@ -1,181 +1,435 @@
 import 'package:flutter/material.dart';
-import '../../../constants/app_constants.dart';
 
 class DetalleAgenteView extends StatelessWidget {
-  final Map<String, String> agente;
+  final Map<String, dynamic> agente;
 
   const DetalleAgenteView({super.key, required this.agente});
 
-  Widget _metricCard(String titulo, String valor, IconData icon, BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(26),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withAlpha(26),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Theme.of(context).primaryColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo, 
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  )
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  valor,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  /// Obtener color según estado
+  Color _getColorEstado(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'DISPONIBLE':
+        return Colors.green;
+      case 'EN LLAMADA':
+        return Colors.blue;
+      case 'POSTCALL':
+        return Colors.orange;
+      case 'DESCONECTADO':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// Obtener icono según estado
+  IconData _getIconoEstado(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'DISPONIBLE':
+        return Icons.check_circle;
+      case 'EN LLAMADA':
+        return Icons.phone_in_talk;
+      case 'POSTCALL':
+        return Icons.timer;
+      case 'DESCONECTADO':
+        return Icons.cancel;
+      default:
+        return Icons.help;
+    }
+  }
+
+  /// Obtener iniciales
+  String _getInitials(String nombre) {
+    final parts = nombre.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return nombre[0].toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Extraer datos del agente
+    final nombre = agente["nombre"] as String;
+    final codigo = agente["codigo"] as String;
+    final estado = agente["estado"] as String;
+    final llamadas = agente["llamadas"] as int;
+    final ventas = agente["ventas"] as int;
+    final tiempoPromedio = agente["tiempoPromedio"] as String;
+    final email = agente["email"] as String;
+    
+    final color = _getColorEstado(estado);
+    final icono = _getIconoEstado(estado);
+
+    // Obtener dimensiones de pantalla
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        elevation: 0,
         backgroundColor: Theme.of(context).primaryColor,
         title: Text(
-          agente["nombre"] ?? "Detalle del Agente", 
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)
+          nombre,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Container(
-        // Main background
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              // Content container with lighter background
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header del agente
+              _buildHeaderCard(context, nombre, codigo, estado, email, color, icono, isSmallScreen),
+              const SizedBox(height: 24),
+
+              // Título de métricas
+              Text(
+                'Métricas de Rendimiento',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
+              const SizedBox(height: 12),
+
+              // KPIs del agente
+              Row(
                 children: [
-                  // 👤 Agent Header Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withAlpha(26),
-                      borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-                      border: Border.all(
-                        color: Theme.of(context).primaryColor.withAlpha(51),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor.withAlpha(26),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.person, 
-                            size: 40, 
-                            color: Theme.of(context).primaryColor
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                agente["nombre"] ?? "",
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Código: ${agente["codigo"]}",
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: agente["estado"] == "Activo" 
-                                    ? Colors.green.withAlpha(26)
-                                    : Colors.red.withAlpha(26),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: agente["estado"] == "Activo" 
-                                      ? Colors.green.withAlpha(76)
-                                      : Colors.red.withAlpha(76),
-                                  ),
-                                ),
-                                child: Text(
-                                  "Estado: ${agente["estado"]}",
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: agente["estado"] == "Activo" 
-                                      ? Colors.green[700]
-                                      : Colors.red[700],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  Expanded(
+                    child: _buildModernMetricCard(
+                      context,
+                      'Llamadas',
+                      llamadas.toString(),
+                      Icons.phone_in_talk,
+                      Colors.blue,
+                      isSmallScreen: isSmallScreen,
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-                  const Divider(height: 1),
-                  const SizedBox(height: 16),
-
-                  // 📊 Metrics Section Header
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      "Métricas del Agente",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  Expanded(
+                    child: _buildModernMetricCard(
+                      context,
+                      'Ventas',
+                      ventas.toString(),
+                      Icons.shopping_bag,
+                      Colors.green,
+                      isSmallScreen: isSmallScreen,
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-                  // 📊 Metrics Cards
-                  _metricCard("Llamadas Atendidas", "120", Icons.call, context),
-                  _metricCard("Ventas Realizadas", "35", Icons.shopping_bag, context),
+              // Tiempo promedio
+              _buildFullWidthMetricCard(
+                context,
+                'Tiempo Promedio',
+                tiempoPromedio,
+                Icons.timer,
+                Colors.orange,
+                isSmallScreen: isSmallScreen,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Información adicional
+              _buildInfoSection(context, email, isSmallScreen),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Header del agente
+  Widget _buildHeaderCard(
+    BuildContext context,
+    String nombre,
+    String codigo,
+    String estado,
+    String email,
+    Color color,
+    IconData icono,
+    bool isSmallScreen,
+  ) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).primaryColor,
+              Theme.of(context).primaryColor.withValues(alpha: 0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+        child: Row(
+          children: [
+            // Avatar
+            Hero(
+              tag: 'avatar_$codigo',
+              child: CircleAvatar(
+                radius: isSmallScreen ? 30 : 35,
+                backgroundColor: Colors.white,
+                child: Text(
+                  _getInitials(nombre),
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 20 : 24,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: isSmallScreen ? 12 : 16),
+
+            // Información
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nombre,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isSmallScreen ? 18 : 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    codigo,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(icono, color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        estado,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
+
+            // Indicador de estado
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icono, color: Colors.white, size: 24),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Card moderno de métrica
+  Widget _buildModernMetricCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color, {
+    required bool isSmallScreen,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: isSmallScreen ? 20 : 24),
+            ),
+            SizedBox(height: isSmallScreen ? 12 : 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 12 : 13,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 24 : 28,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Card de métrica de ancho completo
+  Widget _buildFullWidthMetricCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color, {
+    required bool isSmallScreen,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 12 : 13,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 20 : 24,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Sección de información adicional
+  Widget _buildInfoSection(BuildContext context, String email, bool isSmallScreen) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Información de Contacto',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.email, color: Colors.blue, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Email',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        email,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

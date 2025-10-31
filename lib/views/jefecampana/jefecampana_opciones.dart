@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../backoffice/opciones.dart';
+import '../opciones.dart';
 
 class JefecampanaOpciones extends StatelessWidget {
   const JefecampanaOpciones({super.key});
