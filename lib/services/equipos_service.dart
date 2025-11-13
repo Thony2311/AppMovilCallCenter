@@ -5,26 +5,143 @@ import '../config/auth_manager.dart';
 import '../models/equipos/equipo_model.dart';
 import '../utils/app_logger.dart';
 
-/// Servicio para gestionar operaciones relacionadas con equipos
-/// 
-/// Proporciona métodos para listar y obtener información de equipos
-/// de agentes asignados a campañas del call center.
-class EquiposService {
-  /// Lista todos los equipos con filtros opcionales
-  /// 
-  /// [campana]: Filtrar por ID de campaña
-  /// [coordinador]: Filtrar por documento del coordinador
-  /// [isActive]: Filtrar por equipos activos/inactivos
-  /// [page]: Número de página para paginación
-  /// 
-  /// Returns: Lista de equipos y total de resultados
-  /// Throws: Exception si hay error en la petición
+// Interfaz para testing
+abstract class EquiposServiceInterface {
+  Future<Map<String, dynamic>> listarEquiposInstance({
+    int? campana,
+    String? coordinador,
+    bool? isActive,
+    int page = 1,
+  });
+  
+  Future<EquipoModel> obtenerEquipoInstance(int equipoId);
+  Future<List<EquipoModel>> listarEquiposPorCampanaInstance(int campanaId);
+  Future<List<EquipoModel>> listarEquiposPorCoordinadorInstance(String coordinadorId);
+  Future<List<EquipoModel>> listarEquiposActivosInstance();
+  Future<List<EquipoModel>> listarEquiposInactivosInstance();
+}
+
+class EquiposService implements EquiposServiceInterface {
+  // Singleton pattern
+  static final EquiposService _instance = EquiposService._internal();
+  
+  factory EquiposService() => _instance;
+  
+  EquiposService._internal();
+
+  // ========== MÉTODOS DE INSTANCIA (PARA TESTING) ==========
+  // 🔥 Nombres DIFERENTES: agregamos "Instance" al final
+
+  @override
+  Future<Map<String, dynamic>> listarEquiposInstance({
+    int? campana,
+    String? coordinador,
+    bool? isActive,
+    int page = 1,
+  }) async {
+    return await _listarEquiposStatic(
+      campana: campana,
+      coordinador: coordinador,
+      isActive: isActive,
+      page: page,
+    );
+  }
+
+  @override
+  Future<EquipoModel> obtenerEquipoInstance(int equipoId) async {
+    return await _obtenerEquipoStatic(equipoId);
+  }
+
+  @override
+  Future<List<EquipoModel>> listarEquiposPorCampanaInstance(int campanaId) async {
+    try {
+      final resultado = await listarEquiposInstance(campana: campanaId);
+      return resultado['equipos'] as List<EquipoModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar equipos de campaña $campanaId: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<EquipoModel>> listarEquiposPorCoordinadorInstance(String coordinadorId) async {
+    try {
+      final resultado = await listarEquiposInstance(coordinador: coordinadorId);
+      return resultado['equipos'] as List<EquipoModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar equipos del coordinador $coordinadorId: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<EquipoModel>> listarEquiposActivosInstance() async {
+    try {
+      final resultado = await listarEquiposInstance(isActive: true);
+      return resultado['equipos'] as List<EquipoModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar equipos activos: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<EquipoModel>> listarEquiposInactivosInstance() async {
+    try {
+      final resultado = await listarEquiposInstance(isActive: false);
+      return resultado['equipos'] as List<EquipoModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar equipos inactivos: $e');
+      rethrow;
+    }
+  }
+
+  // ========== MÉTODOS ESTÁTICOS ORIGINALES (NO SE TOCAN) ==========
+  // 🔥 Nombres EXACTAMENTE IGUALES - CERO CAMBIOS EN BLoC
+
   static Future<Map<String, dynamic>> listarEquipos({
     int? campana,
     String? coordinador,
     bool? isActive,
     int page = 1,
   }) async {
+    return await _instance.listarEquiposInstance(
+      campana: campana,
+      coordinador: coordinador,
+      isActive: isActive,
+      page: page,
+    );
+  }
+
+  static Future<EquipoModel> obtenerEquipo(int equipoId) async {
+    return await _instance.obtenerEquipoInstance(equipoId);
+  }
+
+  static Future<List<EquipoModel>> listarEquiposPorCampana(int campanaId) async {
+    return await _instance.listarEquiposPorCampanaInstance(campanaId);
+  }
+
+  static Future<List<EquipoModel>> listarEquiposPorCoordinador(String coordinadorId) async {
+    return await _instance.listarEquiposPorCoordinadorInstance(coordinadorId);
+  }
+
+  static Future<List<EquipoModel>> listarEquiposActivos() async {
+    return await _instance.listarEquiposActivosInstance();
+  }
+
+  static Future<List<EquipoModel>> listarEquiposInactivos() async {
+    return await _instance.listarEquiposInactivosInstance();
+  }
+
+  // ========== IMPLEMENTACIONES PRIVADAS (LÓGICA ORIGINAL) ==========
+
+  static Future<Map<String, dynamic>> _listarEquiposStatic({
+    int? campana,
+    String? coordinador,
+    bool? isActive,
+    int page = 1,
+  }) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final token = AuthManager().accessToken;
       if (token == null || token.isEmpty) {
@@ -85,13 +202,8 @@ class EquiposService {
     }
   }
 
-  /// Obtiene los detalles completos de un equipo específico
-  /// 
-  /// [equipoId]: ID del equipo a consultar
-  /// 
-  /// Returns: Modelo completo del equipo con sus agentes
-  /// Throws: Exception si hay error en la petición o no se encuentra
-  static Future<EquipoModel> obtenerEquipo(int equipoId) async {
+  static Future<EquipoModel> _obtenerEquipoStatic(int equipoId) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final token = AuthManager().accessToken;
       if (token == null || token.isEmpty) {
@@ -125,62 +237,6 @@ class EquiposService {
       }
     } catch (e) {
       AppLogger.error('❌ Error al obtener equipo #$equipoId: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene los equipos de una campaña específica
-  /// 
-  /// [campanaId]: ID de la campaña
-  /// 
-  /// Returns: Lista de equipos asignados a la campaña
-  static Future<List<EquipoModel>> listarEquiposPorCampana(int campanaId) async {
-    try {
-      final resultado = await listarEquipos(campana: campanaId);
-      return resultado['equipos'] as List<EquipoModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar equipos de campaña $campanaId: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene los equipos de un coordinador específico
-  /// 
-  /// [coordinadorId]: Documento del coordinador
-  /// 
-  /// Returns: Lista de equipos asignados al coordinador
-  static Future<List<EquipoModel>> listarEquiposPorCoordinador(String coordinadorId) async {
-    try {
-      final resultado = await listarEquipos(coordinador: coordinadorId);
-      return resultado['equipos'] as List<EquipoModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar equipos del coordinador $coordinadorId: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene solo los equipos activos
-  /// 
-  /// Returns: Lista de equipos con estado activo
-  static Future<List<EquipoModel>> listarEquiposActivos() async {
-    try {
-      final resultado = await listarEquipos(isActive: true);
-      return resultado['equipos'] as List<EquipoModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar equipos activos: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene los equipos inactivos
-  /// 
-  /// Returns: Lista de equipos con estado inactivo
-  static Future<List<EquipoModel>> listarEquiposInactivos() async {
-    try {
-      final resultado = await listarEquipos(isActive: false);
-      return resultado['equipos'] as List<EquipoModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar equipos inactivos: $e');
       rethrow;
     }
   }

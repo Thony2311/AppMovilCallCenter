@@ -9,7 +9,11 @@ import 'campanas_state.dart';
 /// 
 /// Maneja la carga, filtrado y paginación de campañas del call center.
 class CampanasBloc extends Bloc<CampanasEvent, CampanasState> {
-  CampanasBloc() : super(const CampanasInitial()) {
+  final CampanasServiceInterface? _campanasService;
+
+  CampanasBloc({CampanasServiceInterface? service}) 
+      : _campanasService = service,
+        super(const CampanasInitial()) {
     on<LoadCampanas>(_onLoadCampanas);
     on<LoadCampanaById>(_onLoadCampanaById);
     on<LoadCampanasActivas>(_onLoadCampanasActivas);
@@ -26,12 +30,23 @@ class CampanasBloc extends Bloc<CampanasEvent, CampanasState> {
     try {
       emit(const CampanasLoading());
 
-      final resultado = await CampanasService.listarCampanas(
-        estado: event.estado,
-        jefeCampana: event.jefeCampana,
-        centro: event.centro,
-        page: event.page,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_campanasService != null) {
+        resultado = await _campanasService.listarCampanasInstance(
+          estado: event.estado,
+          jefeCampana: event.jefeCampana,
+          centro: event.centro,
+          page: event.page,
+        );
+      } else {
+        resultado = await CampanasService.listarCampanas(
+          estado: event.estado,
+          jefeCampana: event.jefeCampana,
+          centro: event.centro,
+          page: event.page,
+        );
+      }
 
       final campanas = (resultado['campanas'] as List).cast<CampanaModel>();
       final count = resultado['count'] as int;
@@ -60,7 +75,13 @@ class CampanasBloc extends Bloc<CampanasEvent, CampanasState> {
     try {
       emit(const CampanasLoading());
 
-      final campana = await CampanasService.obtenerCampana(event.campanaId);
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final CampanaModel campana;
+      if (_campanasService != null) {
+        campana = await _campanasService.obtenerCampanaInstance(event.campanaId);
+      } else {
+        campana = await CampanasService.obtenerCampana(event.campanaId);
+      }
 
       emit(CampanaDetailLoaded(campana));
 
@@ -79,7 +100,13 @@ class CampanasBloc extends Bloc<CampanasEvent, CampanasState> {
     try {
       emit(const CampanasLoading());
 
-      final campanas = await CampanasService.listarCampanasActivas();
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final List<CampanaModel> campanas;
+      if (_campanasService != null) {
+        campanas = await _campanasService.listarCampanasActivasInstance();
+      } else {
+        campanas = await CampanasService.listarCampanasActivas();
+      }
 
       emit(CampanasLoaded(
         campanas: campanas,
@@ -103,9 +130,13 @@ class CampanasBloc extends Bloc<CampanasEvent, CampanasState> {
     try {
       emit(const CampanasLoading());
 
-      final resultado = await CampanasService.listarCampanas(
-        estado: event.estado,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_campanasService != null) {
+        resultado = await _campanasService.listarCampanasInstance(estado: event.estado);
+      } else {
+        resultado = await CampanasService.listarCampanas(estado: event.estado);
+      }
 
       final campanas = (resultado['campanas'] as List).cast<CampanaModel>();
       final count = resultado['count'] as int;
@@ -138,10 +169,20 @@ class CampanasBloc extends Bloc<CampanasEvent, CampanasState> {
       emit(CampanasLoadingMore(currentState.campanas));
 
       final nextPage = currentState.currentPage + 1;
-      final resultado = await CampanasService.listarCampanas(
-        estado: currentState.filtroEstado,
-        page: nextPage,
-      );
+
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_campanasService != null) {
+        resultado = await _campanasService.listarCampanasInstance(
+          estado: currentState.filtroEstado,
+          page: nextPage,
+        );
+      } else {
+        resultado = await CampanasService.listarCampanas(
+          estado: currentState.filtroEstado,
+          page: nextPage,
+        );
+      }
 
       final newCampanas = (resultado['campanas'] as List).cast<CampanaModel>();
       final allCampanas = [...currentState.campanas, ...newCampanas];

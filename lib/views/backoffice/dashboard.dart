@@ -26,6 +26,10 @@ class _DashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+  final isTablet = media.size.width > 600;
+  final isLandscape = media.orientation == Orientation.landscape;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       appBar: AppBar(
@@ -48,7 +52,12 @@ class _DashboardContent extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<DashboardBloc, DashboardState>(
+      body: Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 32 : 16,
+        vertical: isLandscape ? 8 : 16,
+      ),
+      child: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           if (state is DashboardCargando) {
             return const Center(child: CircularProgressIndicator());
@@ -57,12 +66,14 @@ class _DashboardContent extends StatelessWidget {
           } else if (state is DashboardCargado) {
             return _buildDashboard(context, state.stats);
           }
-
-          return Center(child: Text("Cargando datos...", style: Theme.of(context).textTheme.bodyMedium));
+          return Center(
+            child: Text("Cargando datos...", style: Theme.of(context).textTheme.bodyMedium),
+          );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _errorView(BuildContext context, String mensaje) {
     return Center(

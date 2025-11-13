@@ -9,7 +9,11 @@ import 'usuarios_state.dart';
 /// 
 /// Maneja la carga, actualización, filtrado y gestión de usuarios del call center.
 class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
-  UsuariosBloc() : super(const UsuariosInitial()) {
+  final UserServiceInterface? _userService;
+
+  UsuariosBloc({UserServiceInterface? service}) 
+      : _userService = service,
+        super(const UsuariosInitial()) {
     on<LoadUsuarios>(_onLoadUsuarios);
     on<LoadUsuarioById>(_onLoadUsuarioById);
     on<LoadPerfilActual>(_onLoadPerfilActual);
@@ -29,12 +33,23 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
     try {
       emit(const UsuariosLoading());
 
-      final resultado = await UserService.listarUsuarios(
-        role: event.role,
-        isActive: event.isActive,
-        search: event.search,
-        page: event.page,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_userService != null) {
+        resultado = await _userService.listarUsuariosInstance(
+          role: event.role,
+          isActive: event.isActive,
+          search: event.search,
+          page: event.page,
+        );
+      } else {
+        resultado = await UserService.listarUsuarios(
+          role: event.role,
+          isActive: event.isActive,
+          search: event.search,
+          page: event.page,
+        );
+      }
 
       final usuarios = (resultado['results'] as List).cast<UsuarioModel>();
       final count = resultado['count'] as int;
@@ -64,7 +79,13 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
     try {
       emit(const UsuariosLoading());
 
-      final usuario = await UserService.obtenerUsuario(event.documentoId);
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final UsuarioModel usuario;
+      if (_userService != null) {
+        usuario = await _userService.obtenerUsuarioInstance(event.documentoId);
+      } else {
+        usuario = await UserService.obtenerUsuario(event.documentoId);
+      }
 
       emit(UsuarioDetailLoaded(usuario));
 
@@ -83,7 +104,13 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
     try {
       emit(const UsuariosLoading());
 
-      final perfil = await UserService.obtenerPerfilActual();
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final UsuarioModel perfil;
+      if (_userService != null) {
+        perfil = await _userService.obtenerPerfilActualInstance();
+      } else {
+        perfil = await UserService.obtenerPerfilActual();
+      }
 
       emit(PerfilActualLoaded(perfil));
 
@@ -102,13 +129,25 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
     try {
       emit(const UsuariosLoading());
 
-      final usuarioActualizado = await UserService.actualizarUsuario(
-        documentoId: event.documentoId,
-        firstName: event.firstName,
-        lastName: event.lastName,
-        phone: event.phone,
-        fotoPerfil: event.fotoPerfil,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final UsuarioModel usuarioActualizado;
+      if (_userService != null) {
+        usuarioActualizado = await _userService.actualizarUsuarioInstance(
+          documentoId: event.documentoId,
+          firstName: event.firstName,
+          lastName: event.lastName,
+          phone: event.phone,
+          fotoPerfil: event.fotoPerfil,
+        );
+      } else {
+        usuarioActualizado = await UserService.actualizarUsuario(
+          documentoId: event.documentoId,
+          firstName: event.firstName,
+          lastName: event.lastName,
+          phone: event.phone,
+          fotoPerfil: event.fotoPerfil,
+        );
+      }
 
       emit(UsuarioUpdated(
         usuarioActualizado,
@@ -136,7 +175,13 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
 
       emit(const UsuariosLoading());
 
-      final mensaje = await UserService.cambiarContrasena(event.request);
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final String mensaje;
+      if (_userService != null) {
+        mensaje = await _userService.cambiarContrasenaInstance(event.request);
+      } else {
+        mensaje = await UserService.cambiarContrasena(event.request);
+      }
 
       emit(PasswordChanged(mensaje));
 
@@ -155,9 +200,13 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
     try {
       emit(const UsuariosLoading());
 
-      final resultado = await UserService.listarUsuarios(
-        role: event.role,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_userService != null) {
+        resultado = await _userService.listarUsuariosInstance(role: event.role);
+      } else {
+        resultado = await UserService.listarUsuarios(role: event.role);
+      }
 
       final usuarios = (resultado['results'] as List).cast<UsuarioModel>();
       final count = resultado['count'] as int;
@@ -190,9 +239,13 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
 
       emit(const UsuariosLoading());
 
-      final resultado = await UserService.listarUsuarios(
-        search: event.searchTerm,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_userService != null) {
+        resultado = await _userService.listarUsuariosInstance(search: event.searchTerm);
+      } else {
+        resultado = await UserService.listarUsuarios(search: event.searchTerm);
+      }
 
       final usuarios = (resultado['results'] as List).cast<UsuarioModel>();
       final count = resultado['count'] as int;
@@ -224,11 +277,22 @@ class UsuariosBloc extends Bloc<UsuariosEvent, UsuariosState> {
       emit(UsuariosLoadingMore(currentState.usuarios));
 
       final nextPage = currentState.currentPage + 1;
-      final resultado = await UserService.listarUsuarios(
-        role: currentState.filtroRole,
-        search: currentState.filtroSearch,
-        page: nextPage,
-      );
+
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_userService != null) {
+        resultado = await _userService.listarUsuariosInstance(
+          role: currentState.filtroRole,
+          search: currentState.filtroSearch,
+          page: nextPage,
+        );
+      } else {
+        resultado = await UserService.listarUsuarios(
+          role: currentState.filtroRole,
+          search: currentState.filtroSearch,
+          page: nextPage,
+        );
+      }
 
       final newUsuarios = (resultado['results'] as List).cast<UsuarioModel>();
       final allUsuarios = [...currentState.usuarios, ...newUsuarios];

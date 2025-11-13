@@ -7,42 +7,169 @@ import '../models/estado_agente_actual_model.dart';
 import '../models/change_password_request_model.dart';
 import '../utils/app_logger.dart';
 
-/// Servicio para gestión de usuarios y estados de agentes
-/// 
-/// Este servicio maneja todas las operaciones CRUD de usuarios,
-/// cambio de contraseña y consulta de estados de agentes.
-class UserService {
-  /// Obtiene el token de autenticación actual
-  static String? _getToken() {
-    return AuthManager().accessToken;
-  }
-
-  /// Construye headers con autenticación
-  static Map<String, String> _buildHeaders() {
-    final token = _getToken();
-    return ApiConfig.headers(token: token);
-  }
+// Interfaz para testing
+abstract class UserServiceInterface {
+  Future<Map<String, dynamic>> listarUsuariosInstance({
+    String? role,
+    bool? isActive,
+    String? search,
+    int? page,
+  });
   
-  /// Helper para loggear éxito
-  static void _logSuccess(String message) {
-    AppLogger.info(message);
+  Future<UsuarioModel> obtenerUsuarioInstance(String documentoId);
+  Future<UsuarioModel> actualizarUsuarioInstance({
+    required String documentoId,
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? fotoPerfil,
+  });
+  Future<String> cambiarContrasenaInstance(ChangePasswordRequestModel request);
+  Future<UsuarioModel> obtenerPerfilActualInstance();
+  Future<EstadoAgenteActualModel> obtenerEstadoActualInstance({String? agenteId});
+  Future<List<EstadoAgenteActualModel>> obtenerAgentesDisponiblesInstance();
+  Future<List<EstadoAgenteActualModel>> obtenerTodosLosEstadosInstance();
+}
+
+class UserService implements UserServiceInterface {
+  // Singleton pattern
+  static final UserService _instance = UserService._internal();
+  
+  factory UserService() => _instance;
+  
+  UserService._internal();
+
+  // ========== MÉTODOS DE INSTANCIA (PARA TESTING) ==========
+  // 🔥 Nombres DIFERENTES: agregamos "Instance" al final
+
+  @override
+  Future<Map<String, dynamic>> listarUsuariosInstance({
+    String? role,
+    bool? isActive,
+    String? search,
+    int? page,
+  }) async {
+    return await _listarUsuariosStatic(
+      role: role,
+      isActive: isActive,
+      search: search,
+      page: page,
+    );
   }
 
-  // ==================== ENDPOINTS DE USUARIOS ====================
+  @override
+  Future<UsuarioModel> obtenerUsuarioInstance(String documentoId) async {
+    return await _obtenerUsuarioStatic(documentoId);
+  }
 
-  /// 1. Listar Usuarios
-  /// GET /api/users/
-  /// 
-  /// Query Parameters opcionales:
-  /// - role: Filtrar por rol (AGENTE, COORDINADOR, etc.)
-  /// - is_active: Filtrar por estado activo (true/false)
-  /// - search: Buscar por nombre o email
+  @override
+  Future<UsuarioModel> actualizarUsuarioInstance({
+    required String documentoId,
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? fotoPerfil,
+  }) async {
+    return await _actualizarUsuarioStatic(
+      documentoId: documentoId,
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone,
+      fotoPerfil: fotoPerfil,
+    );
+  }
+
+  @override
+  Future<String> cambiarContrasenaInstance(ChangePasswordRequestModel request) async {
+    return await _cambiarContrasenaStatic(request);
+  }
+
+  @override
+  Future<UsuarioModel> obtenerPerfilActualInstance() async {
+    return await _obtenerPerfilActualStatic();
+  }
+
+  @override
+  Future<EstadoAgenteActualModel> obtenerEstadoActualInstance({String? agenteId}) async {
+    return await _obtenerEstadoActualStatic(agenteId: agenteId);
+  }
+
+  @override
+  Future<List<EstadoAgenteActualModel>> obtenerAgentesDisponiblesInstance() async {
+    return await _obtenerAgentesDisponiblesStatic();
+  }
+
+  @override
+  Future<List<EstadoAgenteActualModel>> obtenerTodosLosEstadosInstance() async {
+    return await _obtenerTodosLosEstadosStatic();
+  }
+
+  // ========== MÉTODOS ESTÁTICOS ORIGINALES (NO SE TOCAN) ==========
+  // 🔥 Nombres EXACTAMENTE IGUALES - CERO CAMBIOS EN BLoC
+
   static Future<Map<String, dynamic>> listarUsuarios({
     String? role,
     bool? isActive,
     String? search,
     int? page,
   }) async {
+    return await _instance.listarUsuariosInstance(
+      role: role,
+      isActive: isActive,
+      search: search,
+      page: page,
+    );
+  }
+
+  static Future<UsuarioModel> obtenerUsuario(String documentoId) async {
+    return await _instance.obtenerUsuarioInstance(documentoId);
+  }
+
+  static Future<UsuarioModel> actualizarUsuario({
+    required String documentoId,
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? fotoPerfil,
+  }) async {
+    return await _instance.actualizarUsuarioInstance(
+      documentoId: documentoId,
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone,
+      fotoPerfil: fotoPerfil,
+    );
+  }
+
+  static Future<String> cambiarContrasena(ChangePasswordRequestModel request) async {
+    return await _instance.cambiarContrasenaInstance(request);
+  }
+
+  static Future<UsuarioModel> obtenerPerfilActual() async {
+    return await _instance.obtenerPerfilActualInstance();
+  }
+
+  static Future<EstadoAgenteActualModel> obtenerEstadoActual({String? agenteId}) async {
+    return await _instance.obtenerEstadoActualInstance(agenteId: agenteId);
+  }
+
+  static Future<List<EstadoAgenteActualModel>> obtenerAgentesDisponibles() async {
+    return await _instance.obtenerAgentesDisponiblesInstance();
+  }
+
+  static Future<List<EstadoAgenteActualModel>> obtenerTodosLosEstados() async {
+    return await _instance.obtenerTodosLosEstadosInstance();
+  }
+
+  // ========== IMPLEMENTACIONES PRIVADAS (LÓGICA ORIGINAL) ==========
+
+  static Future<Map<String, dynamic>> _listarUsuariosStatic({
+    String? role,
+    bool? isActive,
+    String? search,
+    int? page,
+  }) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       final queryParams = <String, String>{};
@@ -87,9 +214,8 @@ class UserService {
     }
   }
 
-  /// 2. Obtener Usuario Específico
-  /// GET /api/users/{documento_id}/
-  static Future<UsuarioModel> obtenerUsuario(String documentoId) async {
+  static Future<UsuarioModel> _obtenerUsuarioStatic(String documentoId) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       final url = '${ApiConfig.userDetailEndpoint}/$documentoId/';
@@ -116,21 +242,14 @@ class UserService {
     }
   }
 
-  /// 3. Actualizar Usuario
-  /// PATCH /api/users/{documento_id}/
-  /// 
-  /// Campos opcionales para actualizar:
-  /// - first_name
-  /// - last_name
-  /// - phone
-  /// - foto_perfil
-  static Future<UsuarioModel> actualizarUsuario({
+  static Future<UsuarioModel> _actualizarUsuarioStatic({
     required String documentoId,
     String? firstName,
     String? lastName,
     String? phone,
     String? fotoPerfil,
   }) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       final url = '${ApiConfig.userDetailEndpoint}/$documentoId/';
@@ -164,9 +283,8 @@ class UserService {
     }
   }
 
-  /// 4. Cambiar Contraseña
-  /// POST /api/users/change-password/
-  static Future<String> cambiarContrasena(ChangePasswordRequestModel request) async {
+  static Future<String> _cambiarContrasenaStatic(ChangePasswordRequestModel request) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       
@@ -194,17 +312,8 @@ class UserService {
     }
   }
 
-  /// 5. Obtener Perfil Actual
-  /// GET /api/users/me/
-  /// 
-  /// Este endpoint retorna la información del usuario autenticado,
-  /// incluyendo su estado actual si es agente.
-  /// Respeta la jerarquía de permisos:
-  /// - Agente: Solo ve su información
-  /// - Coordinador: Ve su información y la de su equipo
-  /// - Jefe de Campaña: Ve su información, coordinadores y agentes de su campaña
-  /// - Jefe de Centro: Ve toda la información
-  static Future<UsuarioModel> obtenerPerfilActual() async {
+  static Future<UsuarioModel> _obtenerPerfilActualStatic() async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       
@@ -255,14 +364,8 @@ class UserService {
     }
   }
 
-  // ==================== ENDPOINTS DE ESTADOS ====================
-
-  /// 6. Obtener Estado Actual del Agente
-  /// GET /api/users/estados/current/
-  /// 
-  /// Query Parameters opcionales:
-  /// - agente_id: ID del agente (solo para admin)
-  static Future<EstadoAgenteActualModel> obtenerEstadoActual({String? agenteId}) async {
+  static Future<EstadoAgenteActualModel> _obtenerEstadoActualStatic({String? agenteId}) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       final queryParams = <String, String>{};
@@ -293,10 +396,8 @@ class UserService {
     }
   }
 
-  /// 7. Agentes Disponibles
-  /// GET /api/users/estados/disponibles/
-  /// Solo para Admin
-  static Future<List<EstadoAgenteActualModel>> obtenerAgentesDisponibles() async {
+  static Future<List<EstadoAgenteActualModel>> _obtenerAgentesDisponiblesStatic() async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       
@@ -323,10 +424,8 @@ class UserService {
     }
   }
 
-  /// 8. Todos los Estados Actuales
-  /// GET /api/users/estados/todos/
-  /// Solo para Admin
-  static Future<List<EstadoAgenteActualModel>> obtenerTodosLosEstados() async {
+  static Future<List<EstadoAgenteActualModel>> _obtenerTodosLosEstadosStatic() async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final headers = _buildHeaders();
       
@@ -352,5 +451,22 @@ class UserService {
       rethrow;
     }
   }
-}
 
+  // ========== MÉTODOS AUXILIARES ORIGINALES ==========
+
+  /// Obtiene el token de autenticación actual
+  static String? _getToken() {
+    return AuthManager().accessToken;
+  }
+
+  /// Construye headers con autenticación
+  static Map<String, String> _buildHeaders() {
+    final token = _getToken();
+    return ApiConfig.headers(token: token);
+  }
+  
+  /// Helper para loggear éxito
+  static void _logSuccess(String message) {
+    AppLogger.info(message);
+  }
+}

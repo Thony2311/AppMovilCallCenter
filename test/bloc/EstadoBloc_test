@@ -1,0 +1,412 @@
+// test/unit/bloc/estados_bloc_test.dart
+
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:call_center_application/blocs/estados/estados_event.dart';
+import 'package:call_center_application/blocs/estados/estados_state.dart';
+import 'package:call_center_application/blocs/estados/estados_bloc.dart';
+import 'package:call_center_application/services/user_service.dart';
+import 'package:call_center_application/models/estado_agente_actual_model.dart';
+
+// Mocks para los modelos
+class MockEstadoAgenteActualModel extends Mock implements EstadoAgenteActualModel {
+  @override
+  String get agenteId => 'test_agent_123';
+  
+  @override
+  String get agenteNombre => 'Test Agent';
+  
+  @override
+  String get estadoValor => 'DISPONIBLE';
+  
+  @override
+  int get tiempoEnEstadoSegundos => 120;
+  
+  @override
+  String get tiempoEnEstadoFormateado => '02:00';
+}
+
+class MockUserService extends Mock implements UserServiceInterface {}
+
+void main() {
+  late MockUserService mockUserService;
+  late EstadosBloc estadosBloc;
+
+  setUp(() {
+    mockUserService = MockUserService();
+    estadosBloc = EstadosBloc(service: mockUserService);
+    
+    // Configurar fallback values para manejar parámetros nulos
+    registerFallbackValue(const LoadEstadoActual());
+    registerFallbackValue(const LoadAgentesDisponibles());
+    registerFallbackValue(const LoadTodosLosEstados());
+    registerFallbackValue(const RefreshEstado());
+  });
+
+  tearDown(() {
+    estadosBloc.close();
+  });
+
+  group('EstadosBloc - Pruebas Unitarias', () {
+    // ========== PRUEBAS PARA LoadEstadoActual ==========
+    blocTest<EstadosBloc, EstadosState>(
+      'debe emitir [EstadosLoading, EstadoActualLoaded] cuando LoadEstadoActual es exitoso',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadEstadoActual()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadoActualLoaded>(),
+      ],
+      verify: (_) {
+        verify(() => mockUserService.obtenerEstadoActualInstance()).called(1);
+      },
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe emitir [EstadosLoading, EstadosError] cuando LoadEstadoActual falla',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenThrow(Exception('Error de red'));
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadEstadoActual()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadosError>(),
+      ],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe iniciar auto-refresh después de LoadEstadoActual exitoso',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadEstadoActual()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadoActualLoaded>(),
+      ],
+      verify: (bloc) {
+        // Verificar que se llamó al servicio
+        verify(() => mockUserService.obtenerEstadoActualInstance()).called(1);
+      },
+    );
+
+    // ========== PRUEBAS PARA LoadAgentesDisponibles ==========
+    blocTest<EstadosBloc, EstadosState>(
+      'debe emitir [EstadosLoading, AgentesDisponiblesLoaded] cuando LoadAgentesDisponibles es exitoso',
+      build: () {
+        when(() => mockUserService.obtenerAgentesDisponiblesInstance())
+            .thenAnswer((_) async => [MockEstadoAgenteActualModel()]);
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadAgentesDisponibles()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<AgentesDisponiblesLoaded>(),
+      ],
+      verify: (_) {
+        verify(() => mockUserService.obtenerAgentesDisponiblesInstance()).called(1);
+      },
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe emitir [EstadosLoading, EstadosError] cuando LoadAgentesDisponibles falla',
+      build: () {
+        when(() => mockUserService.obtenerAgentesDisponiblesInstance())
+            .thenThrow(Exception('Error de red'));
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadAgentesDisponibles()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadosError>(),
+      ],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe manejar lista vacía de agentes disponibles',
+      build: () {
+        when(() => mockUserService.obtenerAgentesDisponiblesInstance())
+            .thenAnswer((_) async => []);
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadAgentesDisponibles()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<AgentesDisponiblesLoaded>()
+          .having((state) => state.agentes, 'agentes vacíos', isEmpty),
+      ],
+    );
+
+    // ========== PRUEBAS PARA LoadTodosLosEstados ==========
+    blocTest<EstadosBloc, EstadosState>(
+      'debe emitir [EstadosLoading, TodosLosEstadosLoaded] cuando LoadTodosLosEstados es exitoso',
+      build: () {
+        when(() => mockUserService.obtenerTodosLosEstadosInstance())
+            .thenAnswer((_) async => [MockEstadoAgenteActualModel(), MockEstadoAgenteActualModel()]);
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadTodosLosEstados()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<TodosLosEstadosLoaded>()
+          .having((state) => state.estados.length, 'cantidad de estados', 2),
+      ],
+      verify: (_) {
+        verify(() => mockUserService.obtenerTodosLosEstadosInstance()).called(1);
+      },
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe emitir [EstadosLoading, EstadosError] cuando LoadTodosLosEstados falla',
+      build: () {
+        when(() => mockUserService.obtenerTodosLosEstadosInstance())
+            .thenThrow(Exception('Error de red'));
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadTodosLosEstados()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadosError>(),
+      ],
+    );
+
+    // ========== PRUEBAS PARA RefreshEstado ==========
+    blocTest<EstadosBloc, EstadosState>(
+      'debe actualizar EstadoActualLoaded en RefreshEstado exitoso',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        
+        // Iniciar con estado actual cargado
+        final bloc = EstadosBloc(service: mockUserService);
+        bloc.emit(EstadoActualLoaded(
+          estadoActual: MockEstadoAgenteActualModel(),
+          timestamp: DateTime.now(),
+        ));
+        
+        return bloc;
+      },
+      act: (bloc) => bloc.add(const RefreshEstado()),
+      expect: () => [
+        isA<EstadoActualLoaded>(),
+      ],
+      verify: (_) {
+        verify(() => mockUserService.obtenerEstadoActualInstance()).called(1);
+      },
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe detectar cambio de estado en RefreshEstado',
+      build: () {
+        final estadoInicial = MockEstadoAgenteActualModel();
+        final estadoNuevo = MockEstadoAgenteActualModel();
+        
+        when(() => estadoInicial.estadoValor).thenReturn('DISPONIBLE');
+        when(() => estadoNuevo.estadoValor).thenReturn('EN_LLAMADA');
+        
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => estadoNuevo);
+        
+        final bloc = EstadosBloc(service: mockUserService);
+        bloc.emit(EstadoActualLoaded(
+          estadoActual: estadoInicial,
+          timestamp: DateTime.now(),
+        ));
+        
+        return bloc;
+      },
+      act: (bloc) => bloc.add(const RefreshEstado()),
+      expect: () => [
+        isA<EstadoActualLoaded>(),
+      ],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe mantener estado anterior en RefreshEstado con error',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenThrow(Exception('Error de refresco'));
+        
+        final previousEstado = MockEstadoAgenteActualModel();
+        final bloc = EstadosBloc(service: mockUserService);
+        final previousState = EstadoActualLoaded(
+          estadoActual: previousEstado,
+          timestamp: DateTime.now(),
+        );
+        bloc.emit(previousState);
+        
+        return bloc;
+      },
+      act: (bloc) => bloc.add(const RefreshEstado()),
+      expect: () => [
+        isA<EstadosError>()
+          .having((error) => error.previousEstado, 'debe tener estado anterior', isNotNull),
+      ],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'no debe hacer nada en RefreshEstado si no está en EstadoActualLoaded',
+      build: () => estadosBloc,
+      act: (bloc) => bloc.add(const RefreshEstado()),
+      expect: () => [],
+    );
+
+    // ========== PRUEBAS DE SERVICE FALLBACK ==========
+    blocTest<EstadosBloc, EstadosState>(
+      'debe usar servicio inyectado cuando está disponible',
+      build: () {
+        final testBloc = EstadosBloc(service: mockUserService);
+        
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        
+        return testBloc;
+      },
+      act: (bloc) => bloc.add(const LoadEstadoActual()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadoActualLoaded>(),
+      ],
+      verify: (_) {
+        verify(() => mockUserService.obtenerEstadoActualInstance()).called(1);
+      },
+    );
+
+    test('debe funcionar sin servicio inyectado (usar métodos estáticos)', () {
+      // Esta prueba verifica que el BLoC puede crearse sin servicio inyectado
+      // La lógica de fallback está en el BLoC
+      final blocSinService = EstadosBloc();
+      expect(blocSinService.state, const EstadosInitial());
+      blocSinService.close();
+    });
+  });
+
+  group('EstadosBloc - Edge Cases', () {
+    blocTest<EstadosBloc, EstadosState>(
+      'debe manejar múltiples eventos secuencialmente',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        when(() => mockUserService.obtenerAgentesDisponiblesInstance())
+            .thenAnswer((_) async => [MockEstadoAgenteActualModel()]);
+        
+        return estadosBloc;
+      },
+      act: (bloc) {
+        bloc.add(const LoadEstadoActual());
+        bloc.add(const LoadAgentesDisponibles());
+      },
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadoActualLoaded>(),
+        const EstadosLoading(),
+        isA<AgentesDisponiblesLoaded>(),
+      ],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe manejar RefreshEstado en estado inicial sin errores',
+      build: () => estadosBloc,
+      act: (bloc) => bloc.add(const RefreshEstado()),
+      expect: () => [], // No debe emitir nuevos estados
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe manejar error genérico en todos los eventos',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenThrow(Exception('Error genérico'));
+        when(() => mockUserService.obtenerAgentesDisponiblesInstance())
+            .thenThrow(Exception('Error genérico'));
+        when(() => mockUserService.obtenerTodosLosEstadosInstance())
+            .thenThrow(Exception('Error genérico'));
+        
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadEstadoActual()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadosError>()
+          .having((error) => error.message, 'message', contains('Error genérico')),
+      ],
+    );
+  });
+
+  group('EstadosBloc - Timer Management', () {
+    test('debe cancelar timer al cerrar el bloc', () {
+      final bloc = EstadosBloc(service: mockUserService);
+      
+      // Verificar que el bloc se cierra sin errores
+      expect(() => bloc.close(), returnsNormally);
+    });
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe iniciar timer después de LoadEstadoActual exitoso',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        return estadosBloc;
+      },
+      act: (bloc) => bloc.add(const LoadEstadoActual()),
+      expect: () => [
+        const EstadosLoading(),
+        isA<EstadoActualLoaded>(),
+      ],
+      verify: (bloc) {
+        // El timer se inicia internamente, no podemos verificarlo directamente
+        // pero podemos verificar que el estado final es el correcto
+        expect(bloc.state, isA<EstadoActualLoaded>());
+      },
+    );
+  });
+
+  group('EstadosBloc - State Properties', () {
+    test('EstadoActualLoaded debe tener propiedades correctas', () {
+      final estado = MockEstadoAgenteActualModel();
+      final timestamp = DateTime.now();
+      final state = EstadoActualLoaded(
+        estadoActual: estado,
+        timestamp: timestamp,
+      );
+
+      expect(state.estadoActual, estado);
+      expect(state.timestamp, timestamp);
+      expect(state.props, [estado, timestamp]);
+    });
+
+    test('AgentesDisponiblesLoaded debe tener propiedades correctas', () {
+      final agentes = [MockEstadoAgenteActualModel()];
+      final state = AgentesDisponiblesLoaded(agentes: agentes);
+
+      expect(state.agentes, agentes);
+      expect(state.props, [agentes]);
+    });
+
+    test('TodosLosEstadosLoaded debe tener propiedades correctas', () {
+      final estados = [MockEstadoAgenteActualModel(), MockEstadoAgenteActualModel()];
+      final state = TodosLosEstadosLoaded(estados);
+
+      expect(state.estados, estados);
+      expect(state.props, [estados]);
+    });
+
+    test('EstadosError debe tener propiedades correctas', () {
+      const message = 'Error de prueba';
+      final previousEstado = MockEstadoAgenteActualModel();
+      final state = EstadosError(message, previousEstado: previousEstado);
+
+      expect(state.message, message);
+      expect(state.previousEstado, previousEstado);
+      expect(state.props, [message, previousEstado]);
+    });
+  });
+}

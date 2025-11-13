@@ -598,7 +598,7 @@ class _JefeCampanaAgentesViewState extends State<JefeCampanaAgentesView>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.groups, size: 12, color: Colors.purple),
+                        const Icon(Icons.groups, size: 12, color: Colors.purple),
                         const SizedBox(width: 4),
                         Text(
                           equipo,

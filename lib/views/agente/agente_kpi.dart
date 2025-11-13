@@ -86,53 +86,62 @@ class _AgenteKPIViewState extends State<AgenteKPIView> with SingleTickerProvider
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        title: const Text(
-          "Reportes de Desempeño",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+@override
+Widget build(BuildContext context) {
+  final size = MediaQuery.of(context).size;
+  final width = size.width;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+
+  return Scaffold(
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    appBar: AppBar(
+      elevation: 0,
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      title: const Text(
+        "Reportes de Desempeño",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Actualizar datos',
-            color: Colors.white,
-            onPressed: () {
-              _cargarDatos();
-              _animationController.reset();
-              _animationController.forward();
-            },
-          ),
-        ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: RefreshIndicator(
-          onRefresh: _cargarDatos,
+      iconTheme: const IconThemeData(color: Colors.white),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh_rounded),
+          tooltip: 'Actualizar datos',
+          color: Colors.white,
+          onPressed: () {
+            _cargarDatos();
+            _animationController.reset();
+            _animationController.forward();
+          },
+        ),
+      ],
+    ),
+    body: FadeTransition(
+      opacity: _fadeAnimation,
+      child: RefreshIndicator(
+        onRefresh: _cargarDatos,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: width * 0.04),
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _errorMessage != null
                   ? _buildErrorView()
                   : _kpiData != null
                       ? _buildContentView(isDark)
-                      : const Center(child: Text('No hay datos disponibles')),
+                      : Center(
+                          child: Text(
+                            'No hay datos disponibles',
+                            style: TextStyle(fontSize: width * 0.045),
+                          ),
+                        ),
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   /// Vista de error
   Widget _buildErrorView() {
     return Center(

@@ -12,8 +12,11 @@ import 'estados_state.dart';
 class EstadosBloc extends Bloc<EstadosEvent, EstadosState> {
   Timer? _refreshTimer;
   static const Duration _refreshInterval = Duration(seconds: 30);
+  final UserServiceInterface? _userService;
 
-  EstadosBloc() : super(const EstadosInitial()) {
+  EstadosBloc({UserServiceInterface? service}) 
+      : _userService = service,
+        super(const EstadosInitial()) {
     on<LoadEstadoActual>(_onLoadEstadoActual);
     on<LoadAgentesDisponibles>(_onLoadAgentesDisponibles);
     on<LoadTodosLosEstados>(_onLoadTodosLosEstados);
@@ -28,7 +31,10 @@ class EstadosBloc extends Bloc<EstadosEvent, EstadosState> {
     try {
       emit(const EstadosLoading());
 
-      final estadoActual = await UserService.obtenerEstadoActual();
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final estadoActual = _userService != null
+          ? await _userService.obtenerEstadoActualInstance()
+          : await UserService.obtenerEstadoActual();
 
       emit(EstadoActualLoaded(
         estadoActual: estadoActual,
@@ -53,7 +59,10 @@ class EstadosBloc extends Bloc<EstadosEvent, EstadosState> {
     try {
       emit(const EstadosLoading());
 
-      final agentes = await UserService.obtenerAgentesDisponibles();
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final agentes = _userService != null
+          ? await _userService.obtenerAgentesDisponiblesInstance()
+          : await UserService.obtenerAgentesDisponibles();
 
       emit(AgentesDisponiblesLoaded(
         agentes: agentes,
@@ -74,7 +83,10 @@ class EstadosBloc extends Bloc<EstadosEvent, EstadosState> {
     try {
       emit(const EstadosLoading());
 
-      final estados = await UserService.obtenerTodosLosEstados();
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final estados = _userService != null
+          ? await _userService.obtenerTodosLosEstadosInstance()
+          : await UserService.obtenerTodosLosEstados();
 
       emit(TodosLosEstadosLoaded(estados));
 
@@ -94,7 +106,10 @@ class EstadosBloc extends Bloc<EstadosEvent, EstadosState> {
 
     try {
       // No emitir loading para el refresh silencioso
-      final estadoActual = await UserService.obtenerEstadoActual();
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final estadoActual = _userService != null
+          ? await _userService.obtenerEstadoActualInstance()
+          : await UserService.obtenerEstadoActual();
 
       // Verificar si el estado cambió
       bool estadoCambio = false;

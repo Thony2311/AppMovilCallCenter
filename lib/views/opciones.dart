@@ -522,7 +522,7 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
                 ),
               ),
               if (showArrow)
-                Icon(
+                const Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
                   color: Colors.grey,

@@ -7,7 +7,11 @@ import 'equipos_state.dart';
 
 /// BLoC para gestionar el estado de los equipos
 class EquiposBloc extends Bloc<EquiposEvent, EquiposState> {
-  EquiposBloc() : super(const EquiposInitial()) {
+  final EquiposServiceInterface? _equiposService;
+  
+  EquiposBloc({EquiposServiceInterface? service}) 
+      : _equiposService = service,
+        super(const EquiposInitial()) {
     on<LoadEquipos>(_onLoadEquipos);
     on<LoadEquipoById>(_onLoadEquipoById);
     on<LoadEquiposActivos>(_onLoadEquiposActivos);
@@ -21,12 +25,23 @@ class EquiposBloc extends Bloc<EquiposEvent, EquiposState> {
     try {
       emit(const EquiposLoading());
 
-      final resultado = await EquiposService.listarEquipos(
-        campana: event.campana,
-        coordinador: event.coordinador,
-        isActive: event.isActive,
-        page: event.page,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final Map<String, dynamic> resultado;
+      if (_equiposService != null) {
+        resultado = await _equiposService.listarEquiposInstance(
+          campana: event.campana,
+          coordinador: event.coordinador,
+          isActive: event.isActive,
+          page: event.page,
+        );
+      } else {
+        resultado = await EquiposService.listarEquipos(
+          campana: event.campana,
+          coordinador: event.coordinador,
+          isActive: event.isActive,
+          page: event.page,
+        );
+      }
 
       final equipos = (resultado['equipos'] as List).cast<EquipoModel>();
       final count = resultado['count'] as int;
@@ -51,7 +66,15 @@ class EquiposBloc extends Bloc<EquiposEvent, EquiposState> {
   ) async {
     try {
       emit(const EquiposLoading());
-      final equipo = await EquiposService.obtenerEquipo(event.equipoId);
+      
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final EquipoModel equipo;
+      if (_equiposService != null) {
+        equipo = await _equiposService.obtenerEquipoInstance(event.equipoId);
+      } else {
+        equipo = await EquiposService.obtenerEquipo(event.equipoId);
+      }
+      
       emit(EquipoDetailLoaded(equipo));
     } catch (e) {
       AppLogger.error('❌ Error al cargar equipo: $e');
@@ -65,7 +88,14 @@ class EquiposBloc extends Bloc<EquiposEvent, EquiposState> {
   ) async {
     try {
       emit(const EquiposLoading());
-      final equipos = await EquiposService.listarEquiposActivos();
+      
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final List<EquipoModel> equipos;
+      if (_equiposService != null) {
+        equipos = await _equiposService.listarEquiposActivosInstance();
+      } else {
+        equipos = await EquiposService.listarEquiposActivos();
+      }
 
       emit(EquiposLoaded(
         equipos: equipos,

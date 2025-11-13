@@ -114,7 +114,7 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
 
       // Cargar métricas del agente usando overview (sin restricciones de rol)
       AppLogger.info('Cargando métricas del agente (overview)...');
-      _cargarMetricas();
+      await _cargarMetricas();
 
       // Cargar estado actual
       AppLogger.info('Cargando estado actual del agente...');
@@ -181,101 +181,95 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _estadosBloc,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Theme.of(context).primaryColor,
-          title: Text(
-            "Mi Dashboard",
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: _cargarDatos,
-              tooltip: 'Actualizar',
-            ),
-          ],
+    final size = MediaQuery.of(context).size;
+  final width = size.width;
+  final height = size.height;
+
+  return BlocProvider.value(
+    value: _estadosBloc,
+    child: Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Theme.of(context).primaryColor,
+        title: Text(
+          "Mi Dashboard",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white, // Escala según ancho
+              ),
         ),
-        body: _loadingPerfil
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error al cargar el dashboard',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _cargarDatos,
+            tooltip: 'Actualizar',
+          ),
+        ],
+      ),
+      body: _loadingPerfil
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(width * 0.06),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        SizedBox(height: height * 0.02),
+                        Text(
+                          'Error al cargar el dashboard',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: width * 0.05,
+                              ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _cargarDatos,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reintentar'),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        SizedBox(height: height * 0.03),
+                        ElevatedButton.icon(
+                          onPressed: _cargarDatos,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              )
-            : RefreshIndicator(
-                onRefresh: _cargarDatos,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header con info del agente
-                          _buildHeaderCard(context),
-                          const SizedBox(height: 16),
-
-                          // Estado actual en tiempo real
-                          _buildEstadoActualCard(context),
-                          const SizedBox(height: 24),
-
-                          // Título de métricas
-                          Text(
-                            'Mis Métricas de Hoy',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+                )
+              : RefreshIndicator(
+                  onRefresh: _cargarDatos,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Padding(
+                        padding: EdgeInsets.all(width * 0.04),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeaderCard(context),
+                            SizedBox(height: height * 0.02),
+                            _buildEstadoActualCard(context),
+                            SizedBox(height: height * 0.03),
+                            Text(
+                              'Mis Métricas de Hoy',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: width * 0.045,
+                                  ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // KPIs del agente
-                          _buildKPIsSection(context),
-                        ],
+                            SizedBox(height: height * 0.015),
+                            _buildKPIsSection(context),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
       ),
     );
   }
@@ -785,7 +779,7 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
                   ],
                 ),
               );
-            }).toList(),
+            })
           ],
         ),
       ),
@@ -838,7 +832,7 @@ class TimerChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
-    final strokeWidth = 8.0;
+    const strokeWidth = 8.0;
 
     // Dibujar el círculo de fondo
     final backgroundPaint = Paint()
@@ -905,7 +899,7 @@ class PieChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
-    final strokeWidth = 8.0;
+    const strokeWidth = 8.0;
 
     // Dibujar el círculo de fondo
     final backgroundPaint = Paint()

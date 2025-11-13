@@ -5,26 +5,125 @@ import '../config/auth_manager.dart';
 import '../models/campanas/campana_model.dart';
 import '../utils/app_logger.dart';
 
-/// Servicio para gestionar operaciones relacionadas con campañas
-/// 
-/// Proporciona métodos para listar, obtener y filtrar campañas
-/// del call center según los permisos del usuario autenticado.
-class CampanasService {
-  /// Lista todas las campañas con filtros opcionales
-  /// 
-  /// [estado]: Filtrar por estado (ACTIVA, PAUSADA, FINALIZADA)
-  /// [jefeCampana]: Filtrar por documento del jefe de campaña
-  /// [centro]: Filtrar por ID del centro
-  /// [page]: Número de página para paginación
-  /// 
-  /// Returns: Lista de campañas y total de resultados
-  /// Throws: Exception si hay error en la petición
+// Interfaz para testing
+abstract class CampanasServiceInterface {
+  Future<Map<String, dynamic>> listarCampanasInstance({
+    String? estado,
+    String? jefeCampana,
+    int? centro,
+    int page = 1,
+  });
+  
+  Future<CampanaModel> obtenerCampanaInstance(int campanaId);
+  Future<List<CampanaModel>> listarCampanasActivasInstance();
+  Future<List<CampanaModel>> listarCampanasPorJefeInstance(String jefeCampanaId);
+  Future<List<CampanaModel>> listarCampanasPorCentroInstance(int centroId);
+}
+
+class CampanasService implements CampanasServiceInterface {
+  // Singleton pattern
+  static final CampanasService _instance = CampanasService._internal();
+  
+  factory CampanasService() => _instance;
+  
+  CampanasService._internal();
+
+  // ========== MÉTODOS DE INSTANCIA (PARA TESTING) ==========
+
+  @override
+  Future<Map<String, dynamic>> listarCampanasInstance({
+    String? estado,
+    String? jefeCampana,
+    int? centro,
+    int page = 1,
+  }) async {
+    return await _listarCampanasStatic(
+      estado: estado,
+      jefeCampana: jefeCampana,
+      centro: centro,
+      page: page,
+    );
+  }
+
+  @override
+  Future<CampanaModel> obtenerCampanaInstance(int campanaId) async {
+    return await _obtenerCampanaStatic(campanaId);
+  }
+
+  @override
+  Future<List<CampanaModel>> listarCampanasActivasInstance() async {
+    try {
+      final resultado = await listarCampanasInstance(estado: 'ACTIVA');
+      return resultado['campanas'] as List<CampanaModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar campañas activas: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<CampanaModel>> listarCampanasPorJefeInstance(String jefeCampanaId) async {
+    try {
+      final resultado = await listarCampanasInstance(jefeCampana: jefeCampanaId);
+      return resultado['campanas'] as List<CampanaModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar campañas del jefe $jefeCampanaId: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<CampanaModel>> listarCampanasPorCentroInstance(int centroId) async {
+    try {
+      final resultado = await listarCampanasInstance(centro: centroId);
+      return resultado['campanas'] as List<CampanaModel>;
+    } catch (e) {
+      AppLogger.error('❌ Error al listar campañas del centro $centroId: $e');
+      rethrow;
+    }
+  }
+
+  // ========== MÉTODOS ESTÁTICOS ORIGINALES (NO SE TOCAN) ==========
+
   static Future<Map<String, dynamic>> listarCampanas({
     String? estado,
     String? jefeCampana,
     int? centro,
     int page = 1,
   }) async {
+    return await _instance.listarCampanasInstance(
+      estado: estado,
+      jefeCampana: jefeCampana,
+      centro: centro,
+      page: page,
+    );
+  }
+
+  static Future<CampanaModel> obtenerCampana(int campanaId) async {
+    return await _instance.obtenerCampanaInstance(campanaId);
+  }
+
+  static Future<List<CampanaModel>> listarCampanasActivas() async {
+    return await _instance.listarCampanasActivasInstance();
+  }
+
+  static Future<List<CampanaModel>> listarCampanasPorJefe(String jefeCampanaId) async {
+    return await _instance.listarCampanasPorJefeInstance(jefeCampanaId);
+  }
+
+  static Future<List<CampanaModel>> listarCampanasPorCentro(int centroId) async {
+    return await _instance.listarCampanasPorCentroInstance(centroId);
+  }
+
+  // ========== IMPLEMENTACIONES PRIVADAS (LÓGICA ORIGINAL) ==========
+
+  static Future<Map<String, dynamic>> _listarCampanasStatic({
+    String? estado,
+    String? jefeCampana,
+    int? centro,
+    int page = 1,
+  }) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final token = AuthManager().accessToken;
       if (token == null || token.isEmpty) {
@@ -85,13 +184,8 @@ class CampanasService {
     }
   }
 
-  /// Obtiene los detalles completos de una campaña específica
-  /// 
-  /// [campanaId]: ID de la campaña a consultar
-  /// 
-  /// Returns: Modelo completo de la campaña
-  /// Throws: Exception si hay error en la petición o no se encuentra
-  static Future<CampanaModel> obtenerCampana(int campanaId) async {
+  static Future<CampanaModel> _obtenerCampanaStatic(int campanaId) async {
+    // ✅ TODO EL CÓDIGO ORIGINAL SE MANTIENE IDÉNTICO
     try {
       final token = AuthManager().accessToken;
       if (token == null || token.isEmpty) {
@@ -125,49 +219,6 @@ class CampanasService {
       }
     } catch (e) {
       AppLogger.error('❌ Error al obtener campaña #$campanaId: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene solo las campañas activas
-  /// 
-  /// Returns: Lista de campañas con estado ACTIVA
-  static Future<List<CampanaModel>> listarCampanasActivas() async {
-    try {
-      final resultado = await listarCampanas(estado: 'ACTIVA');
-      return resultado['campanas'] as List<CampanaModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar campañas activas: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene las campañas de un jefe de campaña específico
-  /// 
-  /// [jefeCampanaId]: Documento del jefe de campaña
-  /// 
-  /// Returns: Lista de campañas asignadas al jefe
-  static Future<List<CampanaModel>> listarCampanasPorJefe(String jefeCampanaId) async {
-    try {
-      final resultado = await listarCampanas(jefeCampana: jefeCampanaId);
-      return resultado['campanas'] as List<CampanaModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar campañas del jefe $jefeCampanaId: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtiene las campañas de un centro específico
-  /// 
-  /// [centroId]: ID del centro
-  /// 
-  /// Returns: Lista de campañas del centro
-  static Future<List<CampanaModel>> listarCampanasPorCentro(int centroId) async {
-    try {
-      final resultado = await listarCampanas(centro: centroId);
-      return resultado['campanas'] as List<CampanaModel>;
-    } catch (e) {
-      AppLogger.error('❌ Error al listar campañas del centro $centroId: $e');
       rethrow;
     }
   }

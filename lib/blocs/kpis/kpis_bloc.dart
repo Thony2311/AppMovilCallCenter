@@ -12,8 +12,11 @@ import 'kpis_state.dart';
 class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
   Timer? _refreshTimer;
   static const Duration _refreshInterval = Duration(seconds: 30);
+  final KPIsServiceInterface? _kpisService;
 
-  KPIsBloc() : super(const KPIsInitial()) {
+  KPIsBloc({KPIsServiceInterface? service}) 
+      : _kpisService = service,
+        super(const KPIsInitial()) {
     on<LoadKPIAgentes>(_onLoadKPIAgentes);
     on<LoadKPIAgenteDetalle>(_onLoadKPIAgenteDetalle);
     on<LoadKPIOverview>(_onLoadKPIOverview);
@@ -30,11 +33,18 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
     try {
       emit(const KPIsLoading());
 
-      final agentes = await KPIsService.listarAgentes(
-        role: event.role,
-        isActive: event.isActive,
-        search: event.search,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final agentes = _kpisService != null
+          ? await _kpisService.listarAgentesInstance(
+              role: event.role,
+              isActive: event.isActive,
+              search: event.search,
+            )
+          : await KPIsService.listarAgentes(
+              role: event.role,
+              isActive: event.isActive,
+              search: event.search,
+            );
 
       emit(KPIAgentesLoaded(
         agentes: agentes,
@@ -57,12 +67,20 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
     try {
       emit(const KPIsLoading());
 
-      final detalle = await KPIsService.obtenerKPIAgente(
-        documentoId: event.documentoId,
-        fechaDesde: event.fechaDesde,
-        fechaHasta: event.fechaHasta,
-        rango: event.rango,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final detalle = _kpisService != null
+          ? await _kpisService.obtenerKPIAgenteInstance(
+              documentoId: event.documentoId,
+              fechaDesde: event.fechaDesde,
+              fechaHasta: event.fechaHasta,
+              rango: event.rango,
+            )
+          : await KPIsService.obtenerKPIAgente(
+              documentoId: event.documentoId,
+              fechaDesde: event.fechaDesde,
+              fechaHasta: event.fechaHasta,
+              rango: event.rango,
+            );
 
       emit(KPIAgenteDetalleLoaded(
         detalle: detalle,
@@ -87,12 +105,20 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
     try {
       emit(const KPIsLoading());
 
-      final overview = await KPIsService.obtenerOverview(
-        fechaDesde: event.fechaDesde,
-        fechaHasta: event.fechaHasta,
-        campanaId: event.campanaId,
-        equipoId: event.equipoId,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final overview = _kpisService != null
+          ? await _kpisService.obtenerOverviewInstance(
+              fechaDesde: event.fechaDesde,
+              fechaHasta: event.fechaHasta,
+              campanaId: event.campanaId,
+              equipoId: event.equipoId,
+            )
+          : await KPIsService.obtenerOverview(
+              fechaDesde: event.fechaDesde,
+              fechaHasta: event.fechaHasta,
+              campanaId: event.campanaId,
+              equipoId: event.equipoId,
+            );
 
       emit(KPIOverviewLoaded(
         overview: overview,
@@ -118,11 +144,18 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
     try {
       emit(const KPIsLoading());
 
-      final data = await KPIsService.obtenerKPICoordinador(
-        fechaDesde: event.fechaDesde,
-        fechaHasta: event.fechaHasta,
-        equipoId: event.equipoId,
-      );
+      // 🔥 CORRECCIÓN: Usar servicio inyectado O método estático
+      final data = _kpisService != null
+          ? await _kpisService.obtenerKPICoordinadorInstance(
+              fechaDesde: event.fechaDesde,
+              fechaHasta: event.fechaHasta,
+              equipoId: event.equipoId,
+            )
+          : await KPIsService.obtenerKPICoordinador(
+              fechaDesde: event.fechaDesde,
+              fechaHasta: event.fechaHasta,
+              equipoId: event.equipoId,
+            );
 
       emit(KPICoordinadorLoaded(
         data: data,
@@ -150,9 +183,13 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
       // No emitir loading para el refresh silencioso
       if (currentState is KPIAgenteDetalleLoaded) {
         // Recargar el mismo agente
-        final detalle = await KPIsService.obtenerKPIAgente(
-          documentoId: currentState.detalle.agenteId,
-        );
+        final detalle = _kpisService != null
+            ? await _kpisService.obtenerKPIAgenteInstance(
+                documentoId: currentState.detalle.agenteId,
+              )
+            : await KPIsService.obtenerKPIAgente(
+                documentoId: currentState.detalle.agenteId,
+              );
 
         emit(KPIAgenteDetalleLoaded(
           detalle: detalle,
@@ -162,7 +199,9 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
         AppLogger.info('🔄 KPI agente actualizado');
       } else if (currentState is KPIOverviewLoaded) {
         // Recargar overview (usa fecha de hoy por defecto)
-        final overview = await KPIsService.obtenerOverview();
+        final overview = _kpisService != null
+            ? await _kpisService.obtenerOverviewInstance()
+            : await KPIsService.obtenerOverview();
 
         emit(currentState.copyWith(
           overview: overview,
@@ -172,7 +211,9 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
         AppLogger.info('🔄 Overview KPI actualizado');
       } else if (currentState is KPICoordinadorLoaded) {
         // Recargar KPI coordinador
-        final data = await KPIsService.obtenerKPICoordinador();
+        final data = _kpisService != null
+            ? await _kpisService.obtenerKPICoordinadorInstance()
+            : await KPIsService.obtenerKPICoordinador();
 
         emit(KPICoordinadorLoaded(
           data: data,
@@ -203,10 +244,15 @@ class KPIsBloc extends Bloc<KPIsEvent, KPIsState> {
       try {
         emit(const KPIsLoading());
 
-        final overview = await KPIsService.obtenerOverview(
-          fechaDesde: event.fechaDesde,
-          fechaHasta: event.fechaHasta,
-        );
+        final overview = _kpisService != null
+            ? await _kpisService.obtenerOverviewInstance(
+                fechaDesde: event.fechaDesde,
+                fechaHasta: event.fechaHasta,
+              )
+            : await KPIsService.obtenerOverview(
+                fechaDesde: event.fechaDesde,
+                fechaHasta: event.fechaHasta,
+              );
 
         emit(KPIOverviewLoaded(
           overview: overview,

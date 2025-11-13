@@ -9,6 +9,8 @@ class DetalleLlamadaView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+  final isTablet = media.size.width > 600;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColor, 
@@ -22,7 +24,7 @@ class DetalleLlamadaView extends StatelessWidget {
         color: Theme.of(context).scaffoldBackgroundColor,
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(isTablet ? 32.0 : 16.0),
             child: Container(
               // This container only wraps the content and has the lighter background
               decoration: BoxDecoration(

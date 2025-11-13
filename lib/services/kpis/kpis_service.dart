@@ -9,37 +9,210 @@ import '../../models/kpis/kpi_agente_overview_model.dart';
 import '../../models/kpis/kpi_agente_metricas_model.dart';
 import '../../utils/app_logger.dart';
 
-/// Servicio para gestión de KPIs del Call Center
-/// 
-/// Este servicio maneja todas las operaciones de consulta de métricas
-/// y estadísticas de agentes, equipos, campañas y centros.
-class KPIsService {
-  /// Obtiene el token de autenticación actual
-  static String? _getToken() {
-    return AuthManager().accessToken;
+// Interfaz para testing
+abstract class KPIsServiceInterface {
+  Future<List<KPIAgenteListModel>> listarAgentesInstance({
+    String? role,
+    bool? isActive,
+    String? search,
+  });
+  
+  Future<KPIAgenteDetalleModel> obtenerKPIAgenteInstance({
+    required String documentoId,
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    String? rango,
+  });
+  
+  Future<KPIOverviewModel> obtenerOverviewInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    int? campanaId,
+    int? equipoId,
+  });
+  
+  Future<KPIAgenteMetricasModel> obtenerMetricasAgenteNuevoInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  });
+  
+  Future<KPIAgenteOverviewModel> obtenerMetricasAgenteInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  });
+  
+  Future<Map<String, dynamic>> obtenerKPICoordinadorInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    int? equipoId,
+  });
+}
+
+class KPIsService implements KPIsServiceInterface {
+  // Singleton pattern
+  static final KPIsService _instance = KPIsService._internal();
+  
+  factory KPIsService() => _instance;
+  
+  KPIsService._internal();
+
+  // ========== MÉTODOS DE INSTANCIA (PARA TESTING) ==========
+
+  @override
+  Future<List<KPIAgenteListModel>> listarAgentesInstance({
+    String? role,
+    bool? isActive,
+    String? search,
+  }) async {
+    return await _listarAgentes(
+      role: role,
+      isActive: isActive,
+      search: search,
+    );
   }
 
-  /// Construye headers con autenticación
-  static Map<String, String> _buildHeaders() {
-    final token = _getToken();
-    return ApiConfig.headers(token: token);
+  @override
+  Future<KPIAgenteDetalleModel> obtenerKPIAgenteInstance({
+    required String documentoId,
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    String? rango,
+  }) async {
+    return await _obtenerKPIAgente(
+      documentoId: documentoId,
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+      rango: rango,
+    );
   }
 
-  /// Helper para loggear éxito
-  static void _logSuccess(String message) {
-    AppLogger.info(message);
+  @override
+  Future<KPIOverviewModel> obtenerOverviewInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    int? campanaId,
+    int? equipoId,
+  }) async {
+    return await _obtenerOverview(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+      campanaId: campanaId,
+      equipoId: equipoId,
+    );
   }
 
-  // ==================== ENDPOINTS DE KPIS ====================
+  @override
+  Future<KPIAgenteMetricasModel> obtenerMetricasAgenteNuevoInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    return await _obtenerMetricasAgenteNuevo(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+    );
+  }
 
-  /// 1. Listar Agentes (Vista KPI)
-  /// GET /api/kpis/agentes/
-  /// 
-  /// Query Parameters opcionales:
-  /// - role: Filtrar por rol
-  /// - is_active: Filtrar activos/inactivos
-  /// - search: Buscar por nombre o email
+  @override
+  Future<KPIAgenteOverviewModel> obtenerMetricasAgenteInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    return await _obtenerMetricasAgente(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> obtenerKPICoordinadorInstance({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    int? equipoId,
+  }) async {
+    return await _obtenerKPICoordinador(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+      equipoId: equipoId,
+    );
+  }
+
+  // ========== MÉTODOS ESTÁTICOS ORIGINALES (NO SE TOCAN) ==========
+
   static Future<List<KPIAgenteListModel>> listarAgentes({
+    String? role,
+    bool? isActive,
+    String? search,
+  }) async {
+    return await _instance.listarAgentesInstance(
+      role: role,
+      isActive: isActive,
+      search: search,
+    );
+  }
+
+  static Future<KPIAgenteDetalleModel> obtenerKPIAgente({
+    required String documentoId,
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    String? rango,
+  }) async {
+    return await _instance.obtenerKPIAgenteInstance(
+      documentoId: documentoId,
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+      rango: rango,
+    );
+  }
+
+  static Future<KPIOverviewModel> obtenerOverview({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    int? campanaId,
+    int? equipoId,
+  }) async {
+    return await _instance.obtenerOverviewInstance(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+      campanaId: campanaId,
+      equipoId: equipoId,
+    );
+  }
+
+  static Future<KPIAgenteMetricasModel> obtenerMetricasAgenteNuevo({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    return await _instance.obtenerMetricasAgenteNuevoInstance(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+    );
+  }
+
+  static Future<KPIAgenteOverviewModel> obtenerMetricasAgente({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+  }) async {
+    return await _instance.obtenerMetricasAgenteInstance(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+    );
+  }
+
+  static Future<Map<String, dynamic>> obtenerKPICoordinador({
+    DateTime? fechaDesde,
+    DateTime? fechaHasta,
+    int? equipoId,
+  }) async {
+    return await _instance.obtenerKPICoordinadorInstance(
+      fechaDesde: fechaDesde,
+      fechaHasta: fechaHasta,
+      equipoId: equipoId,
+    );
+  }
+
+  // ========== IMPLEMENTACIONES PRIVADAS (LÓGICA ORIGINAL) ==========
+
+  static Future<List<KPIAgenteListModel>> _listarAgentes({
     String? role,
     bool? isActive,
     String? search,
@@ -77,14 +250,7 @@ class KPIsService {
     }
   }
 
-  /// 2. KPI Detallado de Agente
-  /// GET /api/kpis/agentes/{documento_id}/detalle/
-  /// 
-  /// Query Parameters opcionales:
-  /// - fecha_desde: YYYY-MM-DD (default: hoy)
-  /// - fecha_hasta: YYYY-MM-DD (default: hoy)
-  /// - rango: hoy | semana | mes | personalizado (default: hoy)
-  static Future<KPIAgenteDetalleModel> obtenerKPIAgente({
+  static Future<KPIAgenteDetalleModel> _obtenerKPIAgente({
     required String documentoId,
     DateTime? fechaDesde,
     DateTime? fechaHasta,
@@ -128,15 +294,7 @@ class KPIsService {
     }
   }
 
-  /// 3. Overview de KPIs (Vista General)
-  /// GET /api/kpis/overview/
-  /// 
-  /// Query Parameters:
-  /// - from: YYYY-MM-DD (fecha desde)
-  /// - to: YYYY-MM-DD (fecha hasta)
-  /// - campana: ID de campaña (para filtrar)
-  /// - equipo: ID de equipo (para filtrar)
-  static Future<KPIOverviewModel> obtenerOverview({
+  static Future<KPIOverviewModel> _obtenerOverview({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
     int? campanaId,
@@ -145,7 +303,6 @@ class KPIsService {
     try {
       final headers = _buildHeaders();
       
-      // Si no se proporcionan fechas, usar la fecha de hoy
       final ahora = DateTime.now();
       final desde = fechaDesde ?? ahora;
       final hasta = fechaHasta ?? ahora;
@@ -170,16 +327,11 @@ class KPIsService {
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
         
-        // Log detallado de la respuesta
         AppLogger.info('📦 Respuesta del backend:');
         AppLogger.info('   - tipo_usuario: ${data['tipo_usuario']}');
         AppLogger.info('   - fecha_desde: ${data['fecha_desde']}');
         AppLogger.info('   - fecha_hasta: ${data['fecha_hasta']}');
         AppLogger.info('   - totales: ${data['totales']}');
-        AppLogger.info('   - Buscando series de llamadas...');
-        AppLogger.info('   - llamadas_por_hora: ${data['llamadas_por_hora']?.runtimeType} (${(data['llamadas_por_hora'] as List?)?.length ?? 0} items)');
-        AppLogger.info('   - series: ${data['series']?.runtimeType} (${(data['series'] as List?)?.length ?? 0} items)');
-        AppLogger.info('   - Keys disponibles: ${data.keys.toList()}');
         
         _logSuccess('✅ Overview KPI obtenido: ${data['tipo_usuario']}');
         
@@ -202,21 +354,13 @@ class KPIsService {
     }
   }
 
-  /// 3b. KPIs del Agente desde Overview (Nuevo formato con values, meta, series)
-  /// GET /api/kpis/overview/
-  /// Para AGENTE - El backend devuelve métricas con estructura: values, meta, series
-  /// 
-  /// Query Parameters requeridos:
-  /// - from: YYYY-MM-DD (fecha desde)
-  /// - to: YYYY-MM-DD (fecha hasta)
-  static Future<KPIAgenteMetricasModel> obtenerMetricasAgenteNuevo({
+  static Future<KPIAgenteMetricasModel> _obtenerMetricasAgenteNuevo({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
   }) async {
     try {
       final headers = _buildHeaders();
       
-      // Si no se proporcionan fechas, usar la fecha de hoy
       final ahora = DateTime.now();
       final desde = fechaDesde ?? ahora;
       final hasta = fechaHasta ?? ahora;
@@ -238,7 +382,6 @@ class KPIsService {
       AppLogger.info('📊 Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        // Verificar que sea JSON
         final contentType = response.headers['content-type'] ?? '';
         if (!contentType.contains('application/json')) {
           AppLogger.error('❌ Respuesta NO es JSON. Content-Type: $contentType');
@@ -274,21 +417,13 @@ class KPIsService {
     }
   }
 
-  /// 3c. KPIs del Agente desde Overview (Formato antiguo - deprecated)
-  /// GET /api/kpis/overview/
-  /// Para AGENTE - El backend devuelve solo las métricas propias del agente
-  /// 
-  /// Query Parameters requeridos:
-  /// - from: YYYY-MM-DD (fecha desde)
-  /// - to: YYYY-MM-DD (fecha hasta)
-  static Future<KPIAgenteOverviewModel> obtenerMetricasAgente({
+  static Future<KPIAgenteOverviewModel> _obtenerMetricasAgente({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
   }) async {
     try {
       final headers = _buildHeaders();
       
-      // Si no se proporcionan fechas, usar la fecha de hoy
       final ahora = DateTime.now();
       final desde = fechaDesde ?? ahora;
       final hasta = fechaHasta ?? ahora;
@@ -311,7 +446,6 @@ class KPIsService {
       AppLogger.info('📄 Content-Type: ${response.headers['content-type']}');
 
       if (response.statusCode == 200) {
-        // Verificar que sea JSON
         final contentType = response.headers['content-type'] ?? '';
         if (!contentType.contains('application/json')) {
           AppLogger.error('❌ Respuesta NO es JSON. Content-Type: $contentType');
@@ -341,15 +475,7 @@ class KPIsService {
     }
   }
 
-  /// 4. KPIs de Coordinador (Detallado)
-  /// GET /api/kpis/coordinador-detalle/
-  /// Solo para COORDINADOR
-  /// 
-  /// Query Parameters opcionales:
-  /// - fecha_desde: YYYY-MM-DD
-  /// - fecha_hasta: YYYY-MM-DD
-  /// - equipo_id: ID específico de equipo
-  static Future<Map<String, dynamic>> obtenerKPICoordinador({
+  static Future<Map<String, dynamic>> _obtenerKPICoordinador({
     DateTime? fechaDesde,
     DateTime? fechaHasta,
     int? equipoId,
@@ -389,5 +515,20 @@ class KPIsService {
       AppLogger.error('❌ Excepción al obtener KPI coordinador: $e');
       rethrow;
     }
+  }
+
+  // ========== MÉTODOS AUXILIARES ORIGINALES ==========
+
+  static String? _getToken() {
+    return AuthManager().accessToken;
+  }
+
+  static Map<String, String> _buildHeaders() {
+    final token = _getToken();
+    return ApiConfig.headers(token: token);
+  }
+
+  static void _logSuccess(String message) {
+    AppLogger.info(message);
   }
 }
