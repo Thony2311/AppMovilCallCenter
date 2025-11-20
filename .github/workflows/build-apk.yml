@@ -1,6 +1,13 @@
 name: Build Android APK
 
 on:
+  # Se ejecuta cuando se hace push a estas ramas
+  push:
+    branches:
+      - main
+      - development
+      - coordinadorBackendOfi-Integrar-CI
+
   # Se ejecuta cuando se crea un Pull Request
   pull_request:
     branches:
