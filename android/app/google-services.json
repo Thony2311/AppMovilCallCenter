@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "700129079796",
+    "project_id": "callcenter-app-bd70b",
+    "storage_bucket": "callcenter-app-bd70b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700129079796:android:deb4756b07ff20912e09a1",
+        "android_client_info": {
+          "package_name": "com.example.call_center_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXO_zCS5_eQwLN5i3P4g6s2ofR9SoG7t4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
