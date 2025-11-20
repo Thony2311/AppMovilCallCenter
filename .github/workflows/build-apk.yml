@@ -1,0 +1,72 @@
+name: Build Android APK
+
+on:
+  # Se ejecuta cuando se crea un Pull Request
+  pull_request:
+    branches:
+      - main
+      - development
+  
+  # Permite ejecutar manualmente desde la interfaz de GitHub
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout del código
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # Configurar Java (requerido para Android)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      # Configurar Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.3'  # Ajusta a la versión que uses
+          channel: 'stable'
+          cache: true
+      
+      # Verificar versión de Flutter
+      - name: Flutter version
+        run: flutter --version
+      
+      # Obtener dependencias
+      - name: Get dependencies
+        run: flutter pub get
+      
+      # Analizar código (lint)
+      - name: Analyze code
+        run: flutter analyze
+        continue-on-error: true  # No falla el build si hay warnings
+      
+      # Ejecutar tests
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true  # No falla el build si hay tests fallidos
+      
+      # Compilar APK de release
+      - name: Build APK
+        run: flutter build apk --release
+      
+      # Subir el APK como artefacto
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+      
+      # Mostrar información del APK generado
+      - name: APK info
+        run: |
+          echo "APK generado exitosamente"
+          ls -lh build/app/outputs/flutter-apk/
