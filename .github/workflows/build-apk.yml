@@ -57,18 +57,31 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
       
-      # Subir el APK como artefacto
-      - name: Upload APK
+      # Subir el APK como artefacto en GitHub
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
       
+      # Subir APK a Firebase App Distribution
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: testers
+          file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: |
+            Build #${{ github.run_number }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            
+            Cambios incluidos en esta versión.
+      
       # Mostrar información del APK generado
       - name: APK info
         run: |
-          echo "APK generado exitosamente"
+          echo "APK generado y distribuido exitosamente"
           ls -lh build/app/outputs/flutter-apk/
-
-#Prueba
