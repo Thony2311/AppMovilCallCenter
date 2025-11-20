@@ -1,12 +1,6 @@
 name: Build Android APK
 
 on:
-  # Se ejecuta cuando se hace push a estas ramas
-  push:
-    branches:
-      - main
-      - development
-      - coordinadorBackendOfi-Integrar-CI
 
   # Se ejecuta cuando se crea un Pull Request
   pull_request:
@@ -82,7 +76,6 @@ jobs:
 
       # Subir APK a Firebase App Distribution
       - name: Upload to Firebase App Distribution
-        if: ${{ secrets.FIREBASE_APP_ID != '' }}
         continue-on-error: true
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
