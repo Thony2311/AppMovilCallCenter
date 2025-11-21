@@ -447,7 +447,7 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
                     ),
                   ),
                   
-                  // Tiempo en estado
+                  // Tiempo en estado (sincronizado localmente)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
@@ -459,7 +459,8 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
                         Icon(Icons.timer, color: color, size: 20),
                         const SizedBox(height: 4),
                         Text(
-                          estado.tiempoEnEstadoFormateado,
+                          // Usar el tiempo local sincronizado si está disponible
+                          state.tiempoLocalFormateado ?? estado.tiempoEnEstadoFormateado,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: color,

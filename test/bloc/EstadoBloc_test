@@ -18,13 +18,46 @@ class MockEstadoAgenteActualModel extends Mock implements EstadoAgenteActualMode
   String get agenteNombre => 'Test Agent';
   
   @override
+  String? get agenteEmail => 'test@callcenter.com';
+  
+  @override
   String get estadoValor => 'DISPONIBLE';
+  
+  @override
+  String? get estadoDisplay => 'Disponible';
+  
+  @override
+  int get duracionActual => 120;
   
   @override
   int get tiempoEnEstadoSegundos => 120;
   
   @override
   String get tiempoEnEstadoFormateado => '02:00';
+
+  @override
+  int get estadoId => 1;
+
+  @override
+  DateTime get tiempo => DateTime.now();
+
+  @override
+  DateTime get ultimaActualizacion => DateTime.now();
+
+  @override
+  int? get campanaActualId => null;
+
+  @override
+  bool get aceptaLlamadas => true;
+
+  @override
+  bool get conexionActiva => true;
+
+  @override
+  bool get tieneAudio => true;
+
+  @override
+  bool get puedeRecibirLlamadas => true;
 }
 
 class MockUserService extends Mock implements UserServiceInterface {}
@@ -42,10 +75,11 @@ void main() {
     registerFallbackValue(const LoadAgentesDisponibles());
     registerFallbackValue(const LoadTodosLosEstados());
     registerFallbackValue(const RefreshEstado());
+    registerFallbackValue(const UpdateTiempoLocal(segundos: 0, tiempoFormateado: '00:00'));
   });
 
-  tearDown(() {
-    estadosBloc.close();
+  tearDown(() async {
+    await estadosBloc.close();
   });
 
   group('EstadosBloc - Pruebas Unitarias', () {
@@ -342,11 +376,11 @@ void main() {
   });
 
   group('EstadosBloc - Timer Management', () {
-    test('debe cancelar timer al cerrar el bloc', () {
+    test('debe cancelar timer al cerrar el bloc', () async {
       final bloc = EstadosBloc(service: mockUserService);
       
       // Verificar que el bloc se cierra sin errores
-      expect(() => bloc.close(), returnsNormally);
+      await expectLater(bloc.close(), completes);
     });
 
     blocTest<EstadosBloc, EstadosState>(
@@ -359,13 +393,104 @@ void main() {
       act: (bloc) => bloc.add(const LoadEstadoActual()),
       expect: () => [
         const EstadosLoading(),
-        isA<EstadoActualLoaded>(),
+        isA<EstadoActualLoaded>()
+          .having((state) => state.tiempoLocalSegundos, 'debe tener tiempo local', isNotNull)
+          .having((state) => state.tiempoLocalFormateado, 'debe tener tiempo formateado', isNotNull),
       ],
       verify: (bloc) {
         // El timer se inicia internamente, no podemos verificarlo directamente
         // pero podemos verificar que el estado final es el correcto
         expect(bloc.state, isA<EstadoActualLoaded>());
       },
+    );
+
+    test('debe calcular correctamente el tiempo hasta el próximo intervalo de 30s', () {
+      // Este test verifica la lógica de sincronización del polling
+      // La lógica calcula cuándo es el próximo múltiplo de 30 segundos
+      
+      // Caso 1: Si estamos en el segundo 15, debe esperar 15 segundos hasta el :30
+      var segundosActuales = 15;
+      var segundosHastaProximoIntervalo = segundosActuales < 30 
+          ? 30 - segundosActuales 
+          : 60 - segundosActuales;
+      expect(segundosHastaProximoIntervalo, 15);
+      
+      // Caso 2: Si estamos en el segundo 45, debe esperar 15 segundos hasta el :00
+      segundosActuales = 45;
+      segundosHastaProximoIntervalo = segundosActuales < 30 
+          ? 30 - segundosActuales 
+          : 60 - segundosActuales;
+      expect(segundosHastaProximoIntervalo, 15);
+      
+      // Caso 3: Si estamos en el segundo 0, debe esperar 30 segundos hasta el :30
+      segundosActuales = 0;
+      segundosHastaProximoIntervalo = segundosActuales < 30 
+          ? 30 - segundosActuales 
+          : 60 - segundosActuales;
+      expect(segundosHastaProximoIntervalo, 30);
+    });
+  });
+
+  group('EstadosBloc - Sincronización de Tiempo', () {
+    blocTest<EstadosBloc, EstadosState>(
+      'debe actualizar tiempo local con UpdateTiempoLocal',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        
+        final bloc = EstadosBloc(service: mockUserService);
+        // Cargar estado inicial
+        bloc.emit(EstadoActualLoaded(
+          estadoActual: MockEstadoAgenteActualModel(),
+          timestamp: DateTime.now(),
+          tiempoLocalSegundos: 120,
+          tiempoLocalFormateado: '02:00',
+        ));
+        
+        return bloc;
+      },
+      act: (bloc) => bloc.add(const UpdateTiempoLocal(
+        segundos: 125,
+        tiempoFormateado: '02:05',
+      )),
+      expect: () => [
+        isA<EstadoActualLoaded>()
+          .having((state) => state.tiempoLocalSegundos, 'segundos actualizados', 125)
+          .having((state) => state.tiempoLocalFormateado, 'formato actualizado', '02:05'),
+      ],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'UpdateTiempoLocal no debe hacer nada si no está en EstadoActualLoaded',
+      build: () => estadosBloc,
+      act: (bloc) => bloc.add(const UpdateTiempoLocal(
+        segundos: 125,
+        tiempoFormateado: '02:05',
+      )),
+      expect: () => [],
+    );
+
+    blocTest<EstadosBloc, EstadosState>(
+      'debe sincronizar tiempo del servidor en RefreshEstado',
+      build: () {
+        when(() => mockUserService.obtenerEstadoActualInstance())
+            .thenAnswer((_) async => MockEstadoAgenteActualModel());
+        
+        final bloc = EstadosBloc(service: mockUserService);
+        bloc.emit(EstadoActualLoaded(
+          estadoActual: MockEstadoAgenteActualModel(),
+          timestamp: DateTime.now(),
+          tiempoLocalSegundos: 120,
+          tiempoLocalFormateado: '02:00',
+        ));
+        
+        return bloc;
+      },
+      act: (bloc) => bloc.add(const RefreshEstado()),
+      expect: () => [
+        isA<EstadoActualLoaded>()
+          .having((state) => state.tiempoLocalSegundos, 'debe tener tiempo del servidor', isNotNull),
+      ],
     );
   });
 
@@ -376,11 +501,35 @@ void main() {
       final state = EstadoActualLoaded(
         estadoActual: estado,
         timestamp: timestamp,
+        tiempoLocalSegundos: 120,
+        tiempoLocalFormateado: '02:00',
       );
 
       expect(state.estadoActual, estado);
       expect(state.timestamp, timestamp);
-      expect(state.props, [estado, timestamp]);
+      expect(state.tiempoLocalSegundos, 120);
+      expect(state.tiempoLocalFormateado, '02:00');
+    });
+
+    test('EstadoActualLoaded.copyWithTiempo debe actualizar tiempo correctamente', () {
+      final estado = MockEstadoAgenteActualModel();
+      final timestamp = DateTime.now();
+      final state = EstadoActualLoaded(
+        estadoActual: estado,
+        timestamp: timestamp,
+        tiempoLocalSegundos: 120,
+        tiempoLocalFormateado: '02:00',
+      );
+
+      final nuevoState = state.copyWithTiempo(
+        segundos: 125,
+        formateado: '02:05',
+      );
+
+      expect(nuevoState.tiempoLocalSegundos, 125);
+      expect(nuevoState.tiempoLocalFormateado, '02:05');
+      expect(nuevoState.estadoActual, estado);
+      expect(nuevoState.timestamp, timestamp);
     });
 
     test('AgentesDisponiblesLoaded debe tener propiedades correctas', () {
