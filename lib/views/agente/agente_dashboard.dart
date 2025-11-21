@@ -4,7 +4,6 @@ import '../../blocs/estados/estados_bloc.dart';
 import '../../blocs/estados/estados_event.dart';
 import '../../blocs/estados/estados_state.dart';
 import '../../models/usuario_model.dart';
-import '../../models/kpis/estado_del_dia_model.dart';
 import '../../services/user_service.dart';
 import '../../services/kpis/kpis_service.dart';
 import '../../utils/app_logger.dart';
@@ -703,88 +702,88 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
   }
 
   /// Distribución de estados del día
-  Widget _buildEstadosDistribucion(BuildContext context, List<dynamic> estados) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Distribución del Tiempo',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...estados.map((estadoDynamic) {
-              // Verificar si ya es EstadoDelDiaModel o convertir desde dynamic
-              final estado = estadoDynamic is EstadoDelDiaModel 
-                  ? estadoDynamic
-                  : EstadoDelDiaModel.fromJson(estadoDynamic as Map<String, dynamic>);
-              
-              final estadoValor = estado.estadoValor;
-              final porcentaje = estado.porcentaje;
-              final tiempo = estado.tiempoFormateado;
-              final color = _getColorEstado(estadoValor);
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              estadoValor.replaceAll('_', ' '),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '$tiempo (${porcentaje.toStringAsFixed(1)}%)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: porcentaje / 100,
-                        minHeight: 8,
-                        backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(color),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            })
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildEstadosDistribucion(BuildContext context, List<dynamic> estados) {
+  //   return Card(
+  //     elevation: 2,
+  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Text(
+  //             'Distribución del Tiempo',
+  //             style: Theme.of(context).textTheme.titleMedium?.copyWith(
+  //               fontWeight: FontWeight.bold,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 16),
+  //           ...estados.map((estadoDynamic) {
+  //             // Verificar si ya es EstadoDelDiaModel o convertir desde dynamic
+  //             final estado = estadoDynamic is EstadoDelDiaModel 
+  //                 ? estadoDynamic
+  //                 : EstadoDelDiaModel.fromJson(estadoDynamic as Map<String, dynamic>);
+  //             
+  //             final estadoValor = estado.estadoValor;
+  //             final porcentaje = estado.porcentaje;
+  //             final tiempo = estado.tiempoFormateado;
+  //             final color = _getColorEstado(estadoValor);
+  //
+  //             return Padding(
+  //               padding: const EdgeInsets.only(bottom: 12),
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                     children: [
+  //                       Row(
+  //                         children: [
+  //                           Container(
+  //                             width: 12,
+  //                             height: 12,
+  //                             decoration: BoxDecoration(
+  //                               color: color,
+  //                               shape: BoxShape.circle,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(width: 8),
+  //                           Text(
+  //                             estadoValor.replaceAll('_', ' '),
+  //                             style: const TextStyle(
+  //                               fontWeight: FontWeight.w500,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       Text(
+  //                         '$tiempo (${porcentaje.toStringAsFixed(1)}%)',
+  //                         style: TextStyle(
+  //                           fontWeight: FontWeight.bold,
+  //                           color: color,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   const SizedBox(height: 6),
+  //                   ClipRRect(
+  //                     borderRadius: BorderRadius.circular(4),
+  //                     child: LinearProgressIndicator(
+  //                       value: porcentaje / 100,
+  //                       minHeight: 8,
+  //                       backgroundColor: Colors.grey[200],
+  //                       valueColor: AlwaysStoppedAnimation<Color>(color),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             );
+  //           })
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Color _getColorEstado(String estado) {
     switch (estado.toUpperCase()) {

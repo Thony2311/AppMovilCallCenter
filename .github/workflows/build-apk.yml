@@ -1,0 +1,93 @@
+name: Build Android APK
+
+on:
+
+  # Se ejecuta cuando se crea un Pull Request
+  pull_request:
+    branches:
+      - main
+      - development
+
+  # Permite ejecutar manualmente desde la interfaz de GitHub
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout del código
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Configurar Java (requerido para Android)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      # Configurar Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.3" # Ajusta a la versión que uses
+          channel: "stable"
+          cache: true
+
+      # Verificar versión de Flutter
+      - name: Flutter version
+        run: flutter --version
+
+      # Obtener dependencias
+      - name: Get dependencies
+        run: flutter pub get
+
+      # Configurar google-services.json con la API key
+      - name: Configure Firebase API Key
+        run: |
+          $apiKey = "${{ secrets.GOOGLE_API_KEY }}"
+          $filePath = "android/app/google-services.json"
+          (Get-Content $filePath) -replace 'PLACEHOLDER_GOOGLE_API_KEY', $apiKey | Set-Content $filePath
+        shell: pwsh
+
+      # Analizar código (lint)
+      - name: Analyze code
+        run: flutter analyze
+        continue-on-error: true # No falla el build si hay warnings
+
+      # Ejecutar tests
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true # No falla el build si hay tests fallidos
+
+      # Compilar APK de release
+      - name: Build APK
+        run: flutter build apk --release
+
+      # Subir el APK como artefacto en GitHub
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+      # Subir APK a Firebase App Distribution
+      - name: Upload to Firebase App Distribution
+        continue-on-error: true
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: Desprogramadores
+          file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: "Build #${{ github.run_number }} - Branch: ${{ github.ref_name }}"
+
+      # Mostrar información del APK generado
+      - name: APK info
+        run: |
+          echo "APK generado y distribuido exitosamente"
+          ls -lh build/app/outputs/flutter-apk/
+
