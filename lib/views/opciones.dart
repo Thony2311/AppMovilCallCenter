@@ -1079,10 +1079,12 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
               await AuthManager().clearSession();
               if (context.mounted) {
                 Navigator.of(context).pop();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginView()),
-                  (route) => false,
-                );
+                if (context.mounted) {
+                  await Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginView()),
+                    (route) => false,
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(
