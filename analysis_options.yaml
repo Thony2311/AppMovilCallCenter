@@ -7,13 +7,14 @@
 # Incluye el conjunto de reglas recomendadas de Flutter
 include: package:flutter_lints/flutter.yaml
 
-# Configuración del analizador ..
+# Configuración del analizador
 analyzer:
   # Excluir archivos generados automáticamente
   exclude:
-    - "*/.g.dart"
-    - "*/.freezed.dart"
-    - "*/generated/*"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/generated/**"
+    - "build/**"
   
   # Configuración de lenguaje - moderadamente estricto
   language:
@@ -31,6 +32,7 @@ analyzer:
     deprecated_member_use: warning
     missing_required_param: error
     missing_return: error
+    avoid_print: error  # Forzar uso de logger
     
     # Advertir sobre código no utilizado
     dead_code: warning
