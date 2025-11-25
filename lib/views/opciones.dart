@@ -1,5 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import '../config/auth_manager.dart';
 import '../config/theme_manager.dart';
 import '../models/usuario_model.dart';
@@ -23,6 +28,8 @@ class OpcionesView extends StatefulWidget {
 class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  File? _selectedImage;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -36,6 +43,7 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
       curve: Curves.easeInOut,
     );
     _animationController.forward();
+    _loadSavedProfileImage();
   }
 
   @override
@@ -131,36 +139,72 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 8),
-                  // Avatar
+                  // Avatar (ahora con opción de cambio)
                   Hero(
                     tag: 'user_avatar',
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(51),
-                            blurRadius: 15,
-                            spreadRadius: 3,
+                    child: GestureDetector(
+                      onTap: () => _showImageSourceDialog(context),
+                      child: Stack(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(51),
+                                  blurRadius: 15,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundColor: Colors.white,
+                              child: _selectedImage != null
+                                  ? ClipOval(
+                                      child: Image.file(
+                                        _selectedImage!,
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : usuario?.fotoPerfil != null
+                                      ? ClipOval(
+                                          child: Image.network(
+                                            usuario!.fotoPerfil!,
+                                            width: 80,
+                                            height: 80,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return _buildAvatarText(usuario.fullName);
+                                            },
+                                          ),
+                                        )
+                                      : _buildAvatarText(usuario?.fullName ?? 'U'),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Colors.white,
-                        child: usuario?.fotoPerfil != null
-                            ? ClipOval(
-                                child: Image.network(
-                                  usuario!.fotoPerfil!,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return _buildAvatarText(usuario.fullName);
-                                  },
-                                ),
-                              )
-                            : _buildAvatarText(usuario?.fullName ?? 'U'),
                       ),
                     ),
                   ),
@@ -1052,6 +1096,67 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
     );
   }
 
+  /// Carga la imagen de perfil guardada localmente
+  Future<void> _loadSavedProfileImage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final imagePath = prefs.getString('profile_image_path');
+      
+      if (imagePath != null && imagePath.isNotEmpty) {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          setState(() {
+            _selectedImage = file;
+          });
+        } else {
+          // Si el archivo no existe, limpiar la referencia
+          await prefs.remove('profile_image_path');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error al cargar imagen de perfil: $e');
+    }
+  }
+
+  /// Guarda la ruta de la imagen de perfil localmente
+  Future<void> _saveProfileImagePath(String path) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_image_path', path);
+    } catch (e) {
+      debugPrint('Error al guardar ruta de imagen: $e');
+    }
+  }
+
+  /// Copia la imagen al directorio de almacenamiento permanente de la app
+  Future<File> _saveImagePermanently(File imageFile) async {
+    final directory = await getApplicationDocumentsDirectory();
+    
+    // Limpiar imagen anterior si existe
+    await _deleteOldProfileImage();
+    
+    final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final savedImage = await imageFile.copy('${directory.path}/$fileName');
+    return savedImage;
+  }
+
+  /// Elimina la imagen de perfil anterior para no acumular archivos
+  Future<void> _deleteOldProfileImage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final oldImagePath = prefs.getString('profile_image_path');
+      
+      if (oldImagePath != null && oldImagePath.isNotEmpty) {
+        final oldFile = File(oldImagePath);
+        if (await oldFile.exists()) {
+          await oldFile.delete();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error al eliminar imagen anterior: $e');
+    }
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -1096,5 +1201,191 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
         ],
       ),
     );
+  }
+
+  /// Muestra un diálogo para seleccionar origen de la imagen (cámara o galería)
+  void _showImageSourceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.photo_camera, color: Colors.blue),
+            SizedBox(width: 12),
+            Text('Cambiar foto de perfil'),
+          ],
+        ),
+        content: const Text(
+          'Selecciona de dónde quieres obtener la imagen:',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton.icon(
+            icon: const Icon(Icons.photo_library),
+            label: const Text('Galería'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+          TextButton.icon(
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Cámara'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _pickImage(ImageSource.camera);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Solicita los permisos necesarios según el origen de la imagen
+  Future<bool> _requestPermissions(ImageSource source) async {
+    if (source == ImageSource.camera) {
+      final cameraStatus = await Permission.camera.request();
+      return cameraStatus.isGranted;
+    } else {
+      // Para galería, en Android 13+ se usa READ_MEDIA_IMAGES, en versiones anteriores READ_EXTERNAL_STORAGE
+      if (Platform.isAndroid) {
+        final androidInfo = await _getAndroidVersion();
+        if (androidInfo >= 33) {
+          // Android 13+
+          final photosStatus = await Permission.photos.request();
+          return photosStatus.isGranted;
+        } else {
+          // Android 12 o inferior
+          final storageStatus = await Permission.storage.request();
+          return storageStatus.isGranted;
+        }
+      }
+      return true; // Para iOS u otras plataformas
+    }
+  }
+
+  /// Obtiene la versión de Android del dispositivo
+  Future<int> _getAndroidVersion() async {
+    if (Platform.isAndroid) {
+      // Para simplificar, asumimos que estamos en una versión moderna
+      // En producción, podrías usar device_info_plus para obtener la versión exacta
+      return 33;
+    }
+    return 0;
+  }
+
+  /// Maneja la selección de imagen con gestión de permisos
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      // Verificar y solicitar permisos
+      final hasPermission = await _requestPermissions(source);
+      
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      source == ImageSource.camera
+                          ? 'Permiso de cámara denegado. Ve a Configuración para habilitarlo.'
+                          : 'Permiso de galería denegado. Ve a Configuración para habilitarlo.',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              action: SnackBarAction(
+                label: 'Configuración',
+                textColor: Colors.white,
+                onPressed: () {
+                  openAppSettings();
+                },
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Seleccionar imagen
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        // Guardar la imagen de forma permanente en el dispositivo
+        final File tempFile = File(pickedFile.path);
+        final File savedImage = await _saveImagePermanently(tempFile);
+        
+        // Guardar la ruta en SharedPreferences
+        await _saveProfileImagePath(savedImage.path);
+        
+        setState(() {
+          _selectedImage = savedImage;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Foto de perfil guardada localmente'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+
+        // Aquí podrías agregar la lógica para subir la imagen al servidor en el futuro
+        // await _uploadProfileImage(_selectedImage!);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Error al seleccionar imagen: ${e.toString()}'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 }

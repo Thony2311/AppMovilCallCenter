@@ -23,14 +23,33 @@ class EstadosLoading extends EstadosState {
 class EstadoActualLoaded extends EstadosState {
   final EstadoAgenteActualModel estadoActual;
   final DateTime timestamp;
+  /// Tiempo sincronizado localmente (en segundos)
+  final int? tiempoLocalSegundos;
+  /// Tiempo formateado sincronizado localmente
+  final String? tiempoLocalFormateado;
 
   const EstadoActualLoaded({
     required this.estadoActual,
     required this.timestamp,
+    this.tiempoLocalSegundos,
+    this.tiempoLocalFormateado,
   });
 
   @override
-  List<Object?> get props => [estadoActual, timestamp];
+  List<Object?> get props => [estadoActual, timestamp, tiempoLocalSegundos, tiempoLocalFormateado];
+
+  /// Crea una copia del estado con tiempo local actualizado
+  EstadoActualLoaded copyWithTiempo({
+    required int segundos,
+    required String formateado,
+  }) {
+    return EstadoActualLoaded(
+      estadoActual: estadoActual,
+      timestamp: timestamp,
+      tiempoLocalSegundos: segundos,
+      tiempoLocalFormateado: formateado,
+    );
+  }
 }
 
 /// Estado de éxito al cargar agentes disponibles
