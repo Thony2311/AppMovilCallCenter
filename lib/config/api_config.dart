@@ -2,7 +2,7 @@
 /// Aquí se define la URL base del backend y todos los endpoints disponibles
 class ApiConfig {
   // URL del nuevo backend (ngrok)
-  static const String baseUrl = 'https://gwenn-infundibular-irreclaimably.ngrok-free.dev/api';
+  static const String baseUrl = 'https://unegregious-unscintillating-kingsley.ngrok-free.dev/api';
   
   // Timeouts para las peticiones
   static const Duration connectionTimeout = Duration(seconds: 30);
