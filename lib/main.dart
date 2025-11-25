@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'constants/app_constants.dart';
 import 'views/backoffice/dashboard.dart';
 import 'views/backoffice/ventas.dart';
@@ -7,7 +9,18 @@ import 'views/opciones.dart';
 import 'views/home.dart';
 import 'views/recuperar_contrasena.dart';
 import 'config/theme_manager.dart'; 
-void main() {
+
+/// Punto de entrada principal de la aplicación
+/// Inicializa Firebase y luego ejecuta la app
+void main() async {
+  // Asegurar que los bindings de Flutter estén inicializados
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar Firebase con la configuración generada
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeManager(),

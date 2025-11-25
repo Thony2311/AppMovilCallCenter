@@ -10,6 +10,7 @@ import '../config/theme_manager.dart';
 import '../models/usuario_model.dart';
 import '../models/change_password_request_model.dart';
 import '../services/user_service.dart';
+import '../services/firebase_storage_service.dart';
 import 'login.dart';
 
 /// Características:
@@ -30,6 +31,8 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
   late Animation<double> _fadeAnimation;
   File? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
+  final FirebaseStorageService _firebaseStorageService = FirebaseStorageService();
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -139,11 +142,11 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 8),
-                  // Avatar (ahora con opción de cambio)
+                  // Avatar (ahora con opción de cambio y indicador de carga)
                   Hero(
                     tag: 'user_avatar',
                     child: GestureDetector(
-                      onTap: () => _showImageSourceDialog(context),
+                      onTap: _isUploadingImage ? null : () => _showImageSourceDialog(context),
                       child: Stack(
                         children: [
                           Container(
@@ -184,26 +187,44 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
                                       : _buildAvatarText(usuario?.fullName ?? 'U'),
                             ),
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
+                          // Indicador de carga cuando se está subiendo
+                          if (_isUploadingImage)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.black.withAlpha(128),
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
                                 ),
                               ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                color: Colors.white,
-                                size: 16,
+                            ),
+                          // Botón de cámara
+                          if (!_isUploadingImage)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).primaryColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -1096,10 +1117,12 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
     );
   }
 
-  /// Carga la imagen de perfil guardada localmente
+  /// Carga la imagen de perfil guardada localmente o desde Firebase
   Future<void> _loadSavedProfileImage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // Primero intentar cargar desde el almacenamiento local (cache)
       final imagePath = prefs.getString('profile_image_path');
       
       if (imagePath != null && imagePath.isNotEmpty) {
@@ -1108,9 +1131,38 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
           setState(() {
             _selectedImage = file;
           });
+          return;
         } else {
-          // Si el archivo no existe, limpiar la referencia
+          // Si el archivo local no existe, limpiar la referencia
           await prefs.remove('profile_image_path');
+        }
+      }
+
+      // Si no hay imagen local, intentar cargar desde Firebase
+      final authManager = AuthManager();
+      final usuario = authManager.user;
+      
+      if (usuario != null && usuario.documentoId.isNotEmpty) {
+        // Verificar si existe una imagen en Firebase
+        final String? firebaseUrl = await _firebaseStorageService.getProfilePictureUrl(usuario.documentoId);
+        
+        if (firebaseUrl != null) {
+          // Descargar y guardar localmente para cache
+          final imageBytes = await _firebaseStorageService.downloadProfilePicture(firebaseUrl);
+          
+          if (imageBytes != null) {
+            final directory = await getApplicationDocumentsDirectory();
+            final fileName = 'profile_${usuario.documentoId}.jpg';
+            final file = File('${directory.path}/$fileName');
+            await file.writeAsBytes(imageBytes);
+            
+            await prefs.setString('profile_image_path', file.path);
+            await prefs.setString('profile_image_url', firebaseUrl);
+            
+            setState(() {
+              _selectedImage = file;
+            });
+          }
         }
       }
     } catch (e) {
@@ -1330,40 +1382,90 @@ class _OpcionesViewState extends State<OpcionesView> with SingleTickerProviderSt
       );
 
       if (pickedFile != null) {
-        // Guardar la imagen de forma permanente en el dispositivo
-        final File tempFile = File(pickedFile.path);
-        final File savedImage = await _saveImagePermanently(tempFile);
-        
-        // Guardar la ruta en SharedPreferences
-        await _saveProfileImagePath(savedImage.path);
-        
         setState(() {
-          _selectedImage = savedImage;
+          _isUploadingImage = true;
         });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text('Foto de perfil guardada localmente'),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
+        try {
+          // Convertir XFile a File
+          final File imageFile = File(pickedFile.path);
+          
+          // Obtener el usuario actual para usar su ID
+          final authManager = AuthManager();
+          final usuario = authManager.user;
+          
+          if (usuario == null || usuario.documentoId.isEmpty) {
+            throw Exception('Usuario no autenticado');
+          }
 
-        // Aquí podrías agregar la lógica para subir la imagen al servidor en el futuro
-        // await _uploadProfileImage(_selectedImage!);
+          // Subir la imagen a Firebase Storage
+          final String downloadUrl = await _firebaseStorageService.uploadProfilePicture(
+            userId: usuario.documentoId,
+            imageFile: imageFile,
+          );
+
+          // Guardar la imagen localmente también (opcional, para cache)
+          final File savedImage = await _saveImagePermanently(imageFile);
+          await _saveProfileImagePath(savedImage.path);
+          
+          // Guardar la URL de Firebase en SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('profile_image_url', downloadUrl);
+          
+          setState(() {
+            _selectedImage = savedImage;
+            _isUploadingImage = false;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Foto de perfil subida a Firebase exitosamente'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+          }
+
+          // TODO: Opcional - Enviar la URL al backend para actualizar el perfil
+          // await _updateProfilePictureOnBackend(downloadUrl);
+        } catch (e) {
+          setState(() {
+            _isUploadingImage = false;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Error al subir imagen a Firebase: ${e.toString()}'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       if (mounted) {

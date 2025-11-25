@@ -25,10 +25,10 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
   bool _loadingPerfil = true;
   String? _errorMessage;
   
-  // Métricas del agente
-  int _totalLlamadas = 0;
-  int _ventasRealizadas = 0;
-  double _tasaConversion = 0.0;
+  // Métricas del agente (valores mock para testing)
+  int _totalLlamadas = 15;
+  int _ventasRealizadas = 8;
+  double _tasaConversion = 53.3;
   bool _loadingMetricas = false;
 
   @override
@@ -53,9 +53,11 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
   Future<void> _cargarMetricas() async {
     if (!mounted) return;
     
-    setState(() {
-      _loadingMetricas = true;
-    });
+    if (mounted) {
+      setState(() {
+        _loadingMetricas = true;
+      });
+    }
 
     try {
       AppLogger.info('📊 Obteniendo métricas del agente...');
@@ -67,21 +69,25 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
       
       if (!mounted) return;
       
-      setState(() {
-        _totalLlamadas = metricas.totalLlamadas;
-        _ventasRealizadas = metricas.ventasRealizadas;
-        _tasaConversion = metricas.tasaConversion;
-        _loadingMetricas = false;
-      });
+      if (mounted) {
+        setState(() {
+          _totalLlamadas = metricas.totalLlamadas;
+          _ventasRealizadas = metricas.ventasRealizadas;
+          _tasaConversion = metricas.tasaConversion;
+          _loadingMetricas = false;
+        });
+      }
     } catch (e, stackTrace) {
       AppLogger.error('❌ Error al cargar métricas: $e');
       AppLogger.error('StackTrace: $stackTrace');
       
       if (!mounted) return;
       
-      setState(() {
-        _loadingMetricas = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loadingMetricas = false;
+        });
+      }
       
       // No lanzar error, solo log - las métricas quedarán en 0
     }
@@ -90,10 +96,12 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
   Future<void> _cargarDatos() async {
     if (!mounted) return;
     
-    setState(() {
-      _loadingPerfil = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loadingPerfil = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       AppLogger.info('=== Iniciando carga de dashboard ===');
@@ -106,14 +114,17 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
       
       if (!mounted) return;
       
-      setState(() {
-        _perfil = perfil;
-        _loadingPerfil = false;
-      });
+      if (mounted) {
+        setState(() {
+          _perfil = perfil;
+          _loadingPerfil = false;
+        });
+      }
 
       // Cargar métricas del agente usando overview (sin restricciones de rol)
-      AppLogger.info('Cargando métricas del agente (overview)...');
-      await _cargarMetricas();
+      // TODO: Descomentar cuando el backend esté listo
+      // AppLogger.info('Cargando métricas del agente (overview)...');
+      // await _cargarMetricas();
 
       // Cargar estado actual
       AppLogger.info('Cargando estado actual del agente...');
@@ -149,10 +160,12 @@ class _AgenteDashboardViewState extends State<AgenteDashboardView> with SingleTi
         errorMsg = 'Error al cargar datos:\n\n${e.toString()}';
       }
       
-      setState(() {
-        _loadingPerfil = false;
-        _errorMessage = errorMsg;
-      });
+      if (mounted) {
+        setState(() {
+          _loadingPerfil = false;
+          _errorMessage = errorMsg;
+        });
+      }
     }
   }
 
