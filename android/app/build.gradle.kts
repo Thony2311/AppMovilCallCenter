@@ -8,14 +8,14 @@ plugins {
 }
 
 dependencies {
-  // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 
-  // Firebase Storage
-    implementation("com.google.firebase:firebase-storage-ktx")
+    // Firebase Storage
+    implementation("com.google.firebase:firebase-storage")
     
-  // Firebase Analytics (opcional pero recomendado)
-    implementation("com.google.firebase:firebase-analytics-ktx")
+    // Firebase Analytics (opcional pero recomendado)
+    implementation("com.google.firebase:firebase-analytics")
 }
 
 android {
